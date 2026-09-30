@@ -1,0 +1,29 @@
+# Build output
+/bin/
+/dist/
+
+# Test and coverage artefacts
+*.test
+*.out
+coverage.*
+/testdata/fuzz/**/corpus-tmp/
+
+# Local config and secrets
+.env
+.env.*
+*.key
+*.pem
+ledgerline.local.yaml
+
+# Editors and OS
+.idea/
+.vscode/
+.DS_Store
+
+# Web (Phase 7)
+node_modules/
+.next/
+
+# Python (Phase 10)
+__pycache__/
+.venv/
