@@ -34,12 +34,23 @@ Tooling: `uv` (environments, lockfile), `ruff` (lint and format), `mypy --strict
 
 - **Easier:** one language; the official MCP SDK is the reference implementation; AgentDojo and the eval harness share code with the product.
 - **Performance:** Python adds more latency per call than Go. The plan's targets are relaxed to **p50 < 10 ms, p99 < 50 ms added per `tools/call`** and **≥ 500 ledger appends/s per chain**, and Phase 11 measures them. Mitigations: asyncio throughout, `uvloop`, batched commits, and keeping crypto in C/Rust-backed libraries.
-- **Merkle log:** Tessera is Go-only. Phase 8 implements the RFC 6962/9162 tree, proofs and C2SP signed-note checkpoints in Python, so we must test it against published RFC 6962 test vectors. A transparency-dev witness can still run as an external container; that's an external service, not repo code.
+- **Merkle log:** Tessera is Go-only. See the amendment below: Phase 8 is the one place Go is used.
 - **Gateway adapter:** Envoy's ext_authz is gRPC; Python's `grpcio` handles it.
-- **Verifier neutrality:** a verifier in the same language as the producer proves less. Phase 12 keeps an independent, clean-room verifier with no shared code, plus language-neutral conformance vectors; a second language stays optional.
+- **Verifier neutrality:** a verifier in the same language as the producer proves less. Phase 12 keeps an independent, clean-room verifier with no shared code, plus language-neutral conformance vectors. The Merkle layer gets a true cross-language check (Go builds, Python verifies).
 - **History:** Go tags `v0.0.0`/`v0.0.1` remain in git history for reference.
 
 ## Alternatives considered
 
 - **Stay with Go.** Faster, and Tessera is native, but the maintainer would be learning a language and the domain at once.
 - **TypeScript.** The official MCP TS SDK is good, but Python is the maintainer's strongest language and the evaluation ecosystem is Python.
+
+## Amendment (2026-10-02): Go for the Phase 8 log service only
+
+**Decision.** The transparency log is a separate service, `tlogd/`, written in Go on [Tessera](https://github.com/transparency-dev/tessera). It is the only Go code in the repository, and it has its own `go.mod`. Python code submits entries to it over HTTP and verifies its checkpoints and proofs independently.
+
+**Why.**
+- Tessera is production-proven (it backs Sigstore's Rekor v2) and implements the C2SP tlog-tiles, checkpoint and witness formats. Hand-rolling a Merkle log and signed notes in Python is the most error-prone part of the project.
+- A separate process keeps the signing key and the log's history outside the agent host's and proxy's reach.
+- Go building the log and Python verifying it gives two independent RFC 6962 implementations that must agree, which is stronger evidence than one language checking itself.
+
+**Cost.** A second toolchain from Phase 8 on (Go job in CI, one more container in compose), and roughly 300–500 lines of Go the maintainer must be able to read. The Go stays deliberately thin: glue around Tessera, no business logic.

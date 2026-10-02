@@ -12,7 +12,7 @@
 
 The honest novelty is *not* "a signed agent log" (Pipelock, Agent Receipts, Aileron already do that). It is the combination of: (a) a neutral event schema mapped to OTel GenAI / Agent Receipts / IETF agent-audit-trail, (b) a witnessed Merkle log with offline proofs, (c) MCP↔A2A delegation lineage, (d) signed policy-decision + approval provenance. **Never claim "first tamper-evident agent firewall."** See [prior-art.md](prior-art.md).
 
-**Decisions:** **Python for everything** (ADR-002, 2026-10-02; replaced the original Go/TypeScript plan). Full roadmap before the first public release (repo `pun33t19/ledgerline` stays private until Phase 13). ~20–25 h/week. Commits authored only by the maintainer, never with Claude attribution.
+**Decisions:** **Python for everything** (ADR-002, 2026-10-02; replaced the original Go/TypeScript plan), **except the Phase 8 transparency-log service `tlogd`, written in Go on Tessera** (ADR-002 amendment, 2026-10-02). Full roadmap before the first public release (repo `pun33t19/ledgerline` stays private until Phase 13). ~20–25 h/week. Commits authored only by the maintainer, never with Claude attribution.
 
 **Status:** Phase 0 ✅ (v0.0.0) · Phase 1 ✅ (Go v0.0.1, rewritten in Python as v0.0.2).
 
@@ -32,7 +32,7 @@ The honest novelty is *not* "a signed agent log" (Pipelock, Agent Receipts, Aile
 | Approvals | Temporal Python SDK (`temporalio`), with its time-skipping test environment |
 | Telemetry | `opentelemetry-sdk` (+ `InMemorySpanExporter` in tests) |
 | Console | FastAPI + Jinja2 templates + htmx; `pytest-playwright` for e2e |
-| Merkle log | Own RFC 6962/9162 implementation + C2SP signed-note checkpoints (`cryptography` Ed25519); external witness as a container |
+| Merkle log | **Go exception:** `tlogd`, a small Go service on Tessera (C2SP tlog-tiles, signed checkpoints, witness cosigning) with an HTTP API; Python talks to it with `httpx` and verifies proofs independently in `ledgerline.tlog` |
 | A2A | Official `a2a-sdk` |
 | Eval | AgentDojo (Python), MCPTox |
 | Load | `locust` + `pytest-benchmark` |
@@ -56,12 +56,13 @@ ledgerline/
     taint.py
     approval/              # workflow.py, activities.py, worker.py, interceptor.py
     telemetry.py
-    tlog/                  # merkle.py, proof.py, checkpoint.py, witness.py, integrator.py
+    tlog/                  # client.py (talks to tlogd), verify.py (independent RFC 6962 proof + checkpoint checks), integrator.py
     a2a/                   # proxy.py, lineage.py
     console/               # FastAPI app, templates/, static/
     extauthz/              # gRPC ext_authz service
     demo/                  # demo servers + client (Phase 1) ✅
     wiretap.py             # ✅
+  tlogd/                   # the ONLY Go code: transparency-log service on Tessera (own go.mod), Phase 8
   schema/event.schema.json # PUBLIC event schema
   spec/                    # spec, conformance vectors, mapping tables
   tests/                   # unit, property, integration, e2e
@@ -218,23 +219,29 @@ Demo servers `demo-weather`, `demo-poisoned`, `demo-rugpull`, `demo-client` (`--
 
 ## Phase 8 — Ledger v2: Merkle transparency log (Weeks 13–15)
 
-**Read:** Crosby & Wallach; RFC 6962 + RFC 9162 (tree hashing, inclusion/consistency proofs, STH); C2SP `tlog-tiles`, `signed-note`, `tlog-checkpoint`, `tlog-witness`; Rekor v2 GA post; Merkle 1987 (skim).
+**Language note:** this phase adds the project's only Go code, `tlogd/`, so the log is built on Tessera (the library behind Sigstore's Rekor v2) instead of a hand-rolled tree. Everything that *uses* or *checks* the log stays in Python. The log is built by Go code and checked by separately written Python code: two independent implementations of RFC 6962.
+
+**Read:** Crosby & Wallach; RFC 6962 + RFC 9162 (tree hashing, inclusion/consistency proofs, STH); C2SP `tlog-tiles`, `signed-note`, `tlog-checkpoint`, `tlog-witness`; Tessera README + codelab; Rekor v2 GA post; *Tour of Go* (just enough Go for ~300–500 lines); Merkle 1987 (skim).
 
 **Changes:**
 
 | | Path | Description |
 |---|---|---|
-| ➕ | `src/ledgerline/tlog/merkle.py` | RFC 6962 leaf/node hashing (0x00/0x01 prefixes), tree head computation |
-| ➕ | `src/ledgerline/tlog/proof.py` | Inclusion and consistency proof generation + verification (RFC 9162 algorithms) |
-| ➕ | `src/ledgerline/tlog/checkpoint.py` | C2SP checkpoint body + signed-note Ed25519 signatures (`cryptography`); `ledgerline keygen` |
-| ➕ | `src/ledgerline/tlog/integrator.py` | Async batching every 1–5 s; stores `(seq → leaf_index)` and checkpoints |
-| ➕ | `src/ledgerline/tlog/witness.py` | Submits checkpoints to a witness (C2SP tlog-witness protocol), stores cosignatures |
-| ➕ | `ledgerline export --run X` / `verify --offline bundle.json` | Entries + proofs + cosigned checkpoint; offline verification |
-| ✏️ | migrations `0002_tlog.sql`; compose adds a witness container; console verify panel shows checkpoint + cosigners |
-| ➕ | ADR-008 hash chain + Merkle | Why both layers are kept |
+| ➕ | `tlogd/go.mod`, `tlogd/main.go` | Go service (own module) wrapping Tessera with the POSIX storage driver. Exposes `POST /add` (leaf = ledger `entry_hash`, returns leaf index once integrated), serves the standard C2SP **tlog-tiles** static API (`/checkpoint`, `/tile/...`) that any tlog client can read |
+| ➕ | `tlogd/signer.go` | Ed25519 note signer for checkpoints (`golang.org/x/mod/sumdb/note`); key from a file created by `ledgerline keygen` |
+| ➕ | `tlogd/witness.go` | Sends new checkpoints to a witness (C2SP tlog-witness) and serves the cosigned checkpoint |
+| ➕ | `tlogd/*_test.go`, `tlogd/Dockerfile` | Go tests (add → integrate → proof); container image for compose |
+| ➕ | `src/ledgerline/tlog/client.py` | Python `httpx` client: submits entry hashes to `tlogd`, fetches checkpoints and tiles |
+| ➕ | `src/ledgerline/tlog/verify.py` | **Independent** Python verification: RFC 6962 leaf/node hashing (0x00/0x01), inclusion and consistency proofs computed from tiles, checkpoint signature check with `cryptography` Ed25519 |
+| ➕ | `src/ledgerline/tlog/integrator.py` | Background task: sends committed ledger entries to `tlogd`, records `(seq → leaf_index)` and checkpoints in Postgres |
+| ➕ | `ledgerline keygen`, `ledgerline export --run X`, `ledgerline verify --offline bundle.json` | Key generation; export of entries + proofs + cosigned checkpoint; offline verification with no server or DB |
+| ✏️ | migrations `0002_tlog.sql`; compose adds `tlogd` + a witness container; console verify panel shows checkpoint + cosigners |
+| ✏️ | CI | Adds a Go job for `tlogd/` (`go vet`, `go test -race`, `govulncheck`); Python CI unchanged |
+| ✏️ | Makefile | `make tlogd` (build), `make tlogd-test` |
+| ➕ | ADR-008 hash chain + Merkle; ADR-009 tlogd as a separate Go service | Why both layers are kept; why the log runs as its own process (the signing key and log history sit outside the agent host's and proxy's reach) |
 
-**What's new:** compact inclusion proofs, witnessed signed checkpoints (no split views), fully offline audit.
-**Test:** **RFC 6962 / transparency-dev published test vectors** (essential, since we implement the tree ourselves); `hypothesis`: inclusion for all leaves, consistency across growth; split-view rejected by witness; tampered bundle fails; measure checkpoint lag and proof size.
+**What's new:** compact inclusion proofs, witnessed signed checkpoints (no split views), and fully offline audit, on the same log library Sigstore uses.
+**Test:** Go: Tessera integration tests in `tlogd/`. Python: `verify.py` against **RFC 6962 / transparency-dev published test vectors**, and against proofs produced by a live `tlogd` (cross-implementation check); `hypothesis`: inclusion for random leaves, consistency as the tree grows; split-view checkpoint rejected by the witness; tampered bundle fails offline verify; `tlogd` down → ledger keeps appending (hash chain) and the integrator catches up; measure checkpoint lag and proof size.
 **Exit:** offline verify on a machine without DB access. Tag v0.0.9.
 
 ---
@@ -273,7 +280,7 @@ Demo servers `demo-weather`, `demo-poisoned`, `demo-rugpull`, `demo-client` (`--
 
 **Read:** IETF agent-audit-trail draft (latest); Agent Receipts spec; OTel semconv contribution guide.
 
-**Changes:** `spec/ledgerline-event-v0.1.md` (normative: fields, canonicalisation, hashing, checkpoint format, verification algorithm); frozen `schema/event.schema.json` v0.1; `spec/vectors/*.json` conformance vectors (valid/tampered chains, proofs, checkpoints, expected results); `verifiers/reference/` — an **independent clean-room verifier** sharing no code with `src/ledgerline` (optionally a second language later); `spec/mappings/{otel-genai,agent-receipts,ietf-agent-audit-trail}.md`; CI runs both verifiers against all vectors.
+**Changes:** `spec/ledgerline-event-v0.1.md` (normative: fields, canonicalisation, hashing, checkpoint format, verification algorithm); frozen `schema/event.schema.json` v0.1; `spec/vectors/*.json` conformance vectors (valid/tampered chains, proofs, checkpoints, expected results); `verifiers/reference/` — an **independent clean-room verifier** sharing no code with `src/ledgerline` (the Merkle layer is already cross-checked: Go `tlogd` builds it, Python verifies it); `spec/mappings/{otel-genai,agent-receipts,ietf-agent-audit-trail}.md`; CI runs both verifiers against all vectors.
 **What's new:** a documented, testable format any implementation can verify. Exit: upstream issue/PR opened. Tag v0.0.13.
 
 ---
@@ -289,7 +296,7 @@ Demo servers `demo-weather`, `demo-poisoned`, `demo-rugpull`, `demo-client` (`--
 
 ## Verification (end-to-end, from Phase 7 onward)
 
-1. `docker compose -f deploy/docker-compose.yml up -d` (Postgres, Temporal, Collector/Jaeger, witness).
+1. `docker compose -f deploy/docker-compose.yml up -d` (Postgres, Temporal, Collector/Jaeger, `tlogd`, witness).
 2. `make ci` (ruff, mypy strict, pytest incl. hypothesis + testcontainers).
 3. `demos/supabase.sh`: allowed ticket read → taint → hijacked query → `needs_approval` → deny → agent gets `isError`.
 4. `ledgerline verify --run <id>` passes; `export` + `verify --offline` passes; superuser UPDATE → verify fails at that seq.
