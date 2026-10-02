@@ -24,3 +24,6 @@ ledgerline.local.yaml
 .idea/
 .vscode/
 .DS_Store
+
+# Generated guide (rebuild with `make guide`)
+docs/guide/*.pdf

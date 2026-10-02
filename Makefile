@@ -3,7 +3,7 @@
 
 UV ?= uv
 
-.PHONY: help install test lint fmt typecheck vuln fixtures fixtures-check demo ci
+.PHONY: guide help install test lint fmt typecheck vuln fixtures fixtures-check demo ci
 
 help: ## Show available targets
 	@grep -E '^[a-zA-Z_-]+:.*?## ' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  %-15s %s\n", $$1, $$2}'
@@ -38,5 +38,8 @@ fixtures-check: fixtures ## Fail if regenerated fixtures differ from the committ
 demo: ## Run the demo for a phase (PHASE=N)
 	@test -n "$(PHASE)" || (echo "usage: make demo PHASE=N" && exit 1)
 	./demos/phase$(PHASE).sh
+
+guide: ## Build the beginner's guide PDF (docs/guide/Ledgerline-Guide.pdf)
+	$(UV) run --group guide python docs/guide/build_guide.py
 
 ci: lint typecheck test ## Everything CI runs except vuln and fixtures
