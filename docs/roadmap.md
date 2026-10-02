@@ -14,7 +14,7 @@ The honest novelty is *not* "a signed agent log" (Pipelock, Agent Receipts, Aile
 
 **Decisions:** **Python for everything** (ADR-002, 2026-10-02; replaced the original Go/TypeScript plan), **except the Phase 8 transparency-log service `tlogd`, written in Go on Tessera** (ADR-002 amendment, 2026-10-02). Full roadmap before the first public release (repo `pun33t19/ledgerline` stays private until Phase 13). ~20–25 h/week. Commits authored only by the maintainer, never with Claude attribution.
 
-**Status:** Phase 0 ✅ (v0.0.0) · Phase 1 ✅ (Go v0.0.1, rewritten in Python as v0.0.2).
+**Status:** Phase 0 ✅ (v0.0.0) · Phase 1 ✅ (Go v0.0.1, rewritten in Python as v0.0.2) · Phase 2 ✅ (v0.0.3).
 
 ---
 
@@ -95,29 +95,9 @@ Demo servers `demo-weather`, `demo-poisoned`, `demo-rugpull`, `demo-client` (`--
 
 ---
 
-## Phase 2 — Interceptor (PEP) + tool-definition pinning (Weeks 3–4)
+## Phase 2 — Interceptor (PEP) + tool-definition pinning ✅ (v0.0.3)
 
-**Read:** DDIA 2e (log/storage chapters); MCP transports (stdio framing, Streamable HTTP/SSE, `Mcp-Method`/`Mcp-Name` headers, stateless core); `sparfenyuk/mcp-proxy` (Python!) source; ETDI paper; Trail of Bits `mcp-context-protector`; anyio subprocess and streams docs.
-
-**Changes:**
-
-| | Path | Description |
-|---|---|---|
-| ➕ | `src/ledgerline/jsonrpc.py` | JSON-RPC 2.0 message classification (request/notification/response/error), newline framing over raw bytes, request↔response id correlation |
-| ➕ | `src/ledgerline/proxy/interceptor.py` | `Interceptor` protocol (`on_request` / `on_response` → `Forward`, `Block(error)` or later `Hold`) and a chain that runs several in order. The seam every later phase plugs into |
-| ➕ | `src/ledgerline/proxy/stdio.py` | Spawns the real server, relays stdin/stdout byte lines both ways with anyio, parses each line for the interceptor chain, forwards original bytes unchanged |
-| ➕ | `src/ledgerline/proxy/http.py` | Starlette app reverse-proxying Streamable HTTP (incl. SSE) via `httpx`; checks `Mcp-Method`/`Mcp-Name` match the body (2026-07-28) and rejects mismatches |
-| ➕ | `src/ledgerline/pin/canonical.py`, `lockfile.py` | RFC 8785 canonical JSON (`rfc8785`), SHA-256 of each **whole** tool definition, read/write `ledgerline.lock` |
-| ➕ | `src/ledgerline/pin/interceptor.py` | Hashes every `tools/list` response; re-checks the pin before forwarding each `tools/call`; on mismatch blocks with a JSON-RPC error result and logs an alert |
-| ➕ | `src/ledgerline/proxy/jsonl_log.py` | Temporary JSONL message log (replaced in Phase 3) |
-| ➕ | `src/ledgerline/cli.py` + `[project.scripts] ledgerline` | `ledgerline proxy stdio -- <cmd>`, `ledgerline proxy http --upstream URL --listen :PORT`, `ledgerline pin -- <cmd>` |
-| ➕ | `tests/proxy/`, `tests/pin/` | Replay, property, integration and rug-pull tests |
-| ➕ | `docs/adr/ADR-003-canonical-json-rfc8785.md` | Why JCS for all hashing |
-| ➕ | `demos/phase2.sh` | Pin `demo-rugpull`, run 4 calls through the proxy, 4th blocked |
-
-**What's new:** Ledgerline runs as a transparent proxy in front of any stdio or HTTP MCP server, logs every message, and blocks rug pulls by pinning whole tool definitions.
-**Test:** fixture replay through the relay with raw-byte equality; `hypothesis` fuzzing of the parser (malformed lines, huge lines, mismatched ids); integration (demo-client → proxy → demo-weather) for both handshakes; rug-pull test (4th call blocked) over stdio and HTTP; header/body mismatch rejected; manual: Claude Code configured with `ledgerline proxy stdio -- .venv/bin/demo-weather` works unchanged.
-**Exit:** a changed tool description gets blocked. Tag v0.0.3.
+`ledgerline pin` / `proxy stdio` / `proxy http`; `jsonrpc.py` (strict parsing: duplicate keys, NaN, batches and oversized messages rejected); `proxy/` (interceptor chain with Forward/Replace/Block, stdio relay, HTTP proxy with SSE, JSONL log); `pin/` (RFC 8785 fingerprints, lock file with full definitions, pin interceptor). Changed or unpinned tools are hidden from listings and blocked on call; the current definition is re-fetched before every call (ADR-003, ADR-004). 104 tests incl. byte-identical fixture replay through the proxy. Findings: per-call verification is what stops a silent rug pull; pinning detects change, not malice. Details in `CHANGELOG.md` and `docs/journal/phase2.md`.
 
 ---
 
@@ -141,7 +121,7 @@ Demo servers `demo-weather`, `demo-poisoned`, `demo-rugpull`, `demo-client` (`--
 | ➖ | `proxy/jsonl_log.py` | Replaced by the ledger |
 | ➕ | `deploy/docker-compose.yml` | Postgres 16 |
 | ➕ | `spec/vectors/chain-001.json` | Golden entries + expected hashes (first try reproducing the deep-dive's example hashes) |
-| ➕ | ADR-004 args HMAC + erasure; ADR-005 write-before-forward | |
+| ➕ | ADR-005 args HMAC + erasure; ADR-006 write-before-forward | |
 
 **What's new:** every intercepted call leaves a hash-chained, append-only record written *before* the call runs; `ledgerline verify` proves the chain intact or pinpoints the edit.
 **Test:** golden vectors; `hypothesis`: any single-byte edit fails verify at exactly that seq; 50 concurrent appenders → contiguous valid chain; testcontainers: app-role UPDATE rejected, superuser UPDATE caught; crash between commit and forward → entry exists, tool never ran.
@@ -166,7 +146,7 @@ Demo servers `demo-weather`, `demo-poisoned`, `demo-rugpull`, `demo-client` (`--
 | ➕ | `src/ledgerline/demo/servers/fake_supabase.py` (`demo-fake-supabase`) | SQLite `execute_sql` with `tickets`, `integration_tokens`, poisoned ticket #8812 |
 | ✏️ | schema | `decision` required; `session_taint` enum |
 | ✏️ | proxy chain | pin → taint → policy → ledger; `needs_approval` = deny until Phase 5 |
-| ➕ | ADR-006 fail-closed default | Fail-closed for write/send tools; configurable fail-open for read-only |
+| ➕ | ADR-007 fail-closed default | Fail-closed for write/send tools; configurable fail-open for read-only |
 
 **What's new:** versioned, testable, argument-level rules; taint after untrusted content; every entry records which rulebook version and rule decided.
 **Test:** parametrized policy tests; `policy test` in CI; Step 14 scenario (ticket read allowed → tainted → `select * from integration_tokens` = `needs_approval`); `pytest-benchmark` p99 < 1 ms; injected engine error → recorded deny.
@@ -201,7 +181,7 @@ Demo servers `demo-weather`, `demo-poisoned`, `demo-rugpull`, `demo-client` (`--
 
 **Read:** OTel primer; OTel GenAI + MCP semconv (`semantic-conventions-genai`); W3C Trace Context. (Note: the MCP Python SDK already has `mcp/server/_otel.py`; read it.)
 
-**Changes:** `src/ledgerline/telemetry.py` (OTLP setup; spans `tools/call <tool>`; policy + approval child spans; `traceparent` read/inject in `params._meta`); ledger stores `trace_id/span_id`; compose adds OTel Collector + Jaeger; ADR-007 traces are not evidence.
+**Changes:** `src/ledgerline/telemetry.py` (OTLP setup; spans `tools/call <tool>`; policy + approval child spans; `traceparent` read/inject in `params._meta`); ledger stores `trace_id/span_id`; compose adds OTel Collector + Jaeger; ADR-008 traces are not evidence.
 **What's new:** decisions appear in existing tracing dashboards under the same trace ID as the ledger entry.
 **Test:** `InMemorySpanExporter` assertions on names/attributes/parents; manual Jaeger check. Tag v0.0.7.
 
@@ -238,7 +218,7 @@ Demo servers `demo-weather`, `demo-poisoned`, `demo-rugpull`, `demo-client` (`--
 | ✏️ | migrations `0002_tlog.sql`; compose adds `tlogd` + a witness container; console verify panel shows checkpoint + cosigners |
 | ✏️ | CI | Adds a Go job for `tlogd/` (`go vet`, `go test -race`, `govulncheck`); Python CI unchanged |
 | ✏️ | Makefile | `make tlogd` (build), `make tlogd-test` |
-| ➕ | ADR-008 hash chain + Merkle; ADR-009 tlogd as a separate Go service | Why both layers are kept; why the log runs as its own process (the signing key and log history sit outside the agent host's and proxy's reach) |
+| ➕ | ADR-009 hash chain + Merkle; ADR-010 tlogd as a separate Go service | Why both layers are kept; why the log runs as its own process (the signing key and log history sit outside the agent host's and proxy's reach) |
 
 **What's new:** compact inclusion proofs, witnessed signed checkpoints (no split views), and fully offline audit, on the same log library Sigstore uses.
 **Test:** Go: Tessera integration tests in `tlogd/`. Python: `verify.py` against **RFC 6962 / transparency-dev published test vectors**, and against proofs produced by a live `tlogd` (cross-implementation check); `hypothesis`: inclusion for random leaves, consistency as the tree grows; split-view checkpoint rejected by the witness; tampered bundle fails offline verify; `tlogd` down → ledger keeps appending (hash chain) and the integrator catches up; measure checkpoint lag and proof size.

@@ -2,7 +2,8 @@
 
 It runs discover/initialize → tools/list → tools/call, optionally recording
 raw JSON-RPC traffic. After every call it re-lists the tools and reports any
-definition that changed, which is how you see a rug pull happen.
+definition that changed, appeared or disappeared, which is how you see a rug
+pull happen (``--no-relist`` turns this off, like a host that never re-lists).
 
     demo-client [options] -- <server command> [args...]   # stdio
     demo-client [options] --http http://localhost:8081/mcp
@@ -41,6 +42,7 @@ class Options:
     args: str = "{}"
     repeat: int = 1
     legacy: bool = False
+    no_relist: bool = False
     command: list[str] = field(default_factory=list)
 
 
@@ -90,6 +92,24 @@ def print_tool(out: TextIO, info: ToolInfo) -> None:
         print(f"    │ {line}", file=out)
 
 
+def report_changes(out: TextIO, call: int, before: dict[str, ToolInfo], after: dict[str, ToolInfo]) -> None:
+    """Print what changed in the tool menu since the last listing."""
+    for name in sorted(before.keys() | after.keys()):
+        old, new = before.get(name), after.get(name)
+        if old and new and old.sha256 != new.sha256:
+            print(
+                f'\n⚠ Tool "{name}" changed after call {call} '
+                f"(sha256 {old.sha256[:12]} → {new.sha256[:12]}). New definition:",
+                file=out,
+            )
+            print_tool(out, new)
+        elif old and not new:
+            print(f'\n⚠ Tool "{name}" is no longer listed (after call {call}).', file=out)
+        elif new and not old:
+            print(f'\n⚠ New tool "{name}" appeared (after call {call}):', file=out)
+            print_tool(out, new)
+
+
 def result_text(result: CallToolResult) -> str:
     text = " ".join(c.text for c in result.content if isinstance(c, TextContent))
     return text.replace("\n", " | ") + ("  (isError)" if result.is_error else "")
@@ -133,16 +153,10 @@ async def run(opts: Options, out: TextIO) -> None:
                 result = await client.call_tool(opts.call, call_args)
                 print(f"\nCall {i} → {result_text(result)}", file=out)
 
+                if opts.no_relist:
+                    continue  # behave like a host that never re-reads the menu
                 current = await list_tools(client)
-                for name in sorted(current):
-                    old = pinned.get(name)
-                    if old and old.sha256 != current[name].sha256:
-                        print(
-                            f'\n⚠ Tool "{name}" changed after call {i} '
-                            f"(sha256 {old.sha256[:12]} → {current[name].sha256[:12]}). New definition:",
-                            file=out,
-                        )
-                        print_tool(out, current[name])
+                report_changes(out, i, pinned, current)
                 pinned = current
 
 
@@ -165,6 +179,11 @@ def parse_args(argv: list[str]) -> Options:
     parser.add_argument("--args", default="{}", help="tool arguments as a JSON object")
     parser.add_argument("--repeat", type=int, default=1, help="number of times to call the tool")
     parser.add_argument("--legacy", action="store_true", help="use the pre-2026 initialize handshake")
+    parser.add_argument(
+        "--no-relist",
+        action="store_true",
+        help="don't re-list tools after each call (like a host that never does)",
+    )
     ns = parser.parse_args(argv)
     return Options(
         http=ns.http,
@@ -173,6 +192,7 @@ def parse_args(argv: list[str]) -> Options:
         args=ns.args,
         repeat=ns.repeat,
         legacy=ns.legacy,
+        no_relist=ns.no_relist,
         command=command,
     )
 

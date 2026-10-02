@@ -15,7 +15,18 @@ make install         # create .venv and install dependencies
 make help            # list tasks
 make ci              # lint, type-check, test
 ./demos/phase1.sh    # tool poisoning and rug pull against the demo MCP servers
+./demos/phase2.sh    # Ledgerline pins tool definitions and blocks the rug pull
 ```
+
+## Using the proxy
+
+```sh
+ledgerline pin -- <server command>                     # review and approve the server's tools
+ledgerline proxy stdio -- <server command>             # then run your MCP host against this
+ledgerline proxy http --upstream http://host:port/mcp  # or front an HTTP server on :9000/mcp
+```
+
+Ledgerline forwards normal traffic unchanged, hides tools whose definition changed since they were pinned, and blocks calls to them. See [ADR-004](docs/adr/ADR-004-tool-pinning-enforcement.md).
 
 The demo servers in `src/ledgerline/demo/servers/` include deliberately malicious ones (`demo-poisoned`, `demo-rugpull`) for testing Ledgerline. They only target a fake file under `~/.ledgerline-demo/`.
 

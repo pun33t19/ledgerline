@@ -4,6 +4,25 @@ All notable changes to this project are documented here. The format follows [Kee
 
 ## [Unreleased]
 
+## [v0.0.3] - 2026-10-02 — Phase 2: interceptor proxy + tool pinning
+
+### Added
+- `ledgerline` command:
+  - `ledgerline pin`: fetch a server's tools, show every new or changed definition in full, and write `ledgerline.lock` after confirmation.
+  - `ledgerline proxy stdio -- <cmd>`: run in front of a local MCP server.
+  - `ledgerline proxy http --upstream URL`: run in front of a Streamable HTTP server (JSON and SSE replies).
+  - Proxy options: `--lock`, `--tofu`, `--no-verify-each-call`, `--log`.
+- Tool pinning (ADR-004): whole tool definitions are pinned with SHA-256 over RFC 8785 canonical JSON (ADR-003). Changed or unpinned tools are removed from `tools/list` replies, and calls to them are blocked with an `isError` result. The proxy re-fetches a tool's current definition before every call, so silent rug pulls are caught even when the host never re-lists.
+- Strict JSON-RPC parsing (duplicate keys, `NaN`, batches, oversized messages and invalid UTF-8 are rejected), and `Mcp-Method`/`Mcp-Name` header-body checks on HTTP.
+- An interceptor chain (`Forward` / `Replace` / `Block`): the plug-in point for later phases.
+- A JSONL message and alert log (`--log`), temporary until the Phase 3 ledger.
+- `demo-client --no-relist` (simulates a host that never re-lists) and reports for tools that appear or disappear.
+- 104 tests, including byte-for-byte transparency of the Phase 1 fixtures through the proxy, the rug pull over stdio and every HTTP mode, and Hypothesis fuzzing of the parser.
+- `demos/phase2.sh`, ADR-003, ADR-004 and the Phase 2 journal.
+
+### Changed
+- `Wiretap` accepts a function sink as well as a file.
+
 ## [v0.0.2] - 2026-10-02 — Phase 1 rewritten in Python
 
 ### Changed

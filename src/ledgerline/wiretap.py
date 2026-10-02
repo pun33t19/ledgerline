@@ -1,17 +1,19 @@
 """Record the JSON-RPC messages flowing over an MCP client transport as JSON Lines.
 
 Wrap any transport (stdio or Streamable HTTP) in :class:`Wiretap` and every
-message the client sends or receives is written as one line::
+message the client sends or receives is passed to a sink. With a file, each
+message is written as one line::
 
     {"dir": "sent" | "received", "msg": <JSON-RPC message>}
 
-The output is used to capture golden fixtures (``testdata/mcp/*.jsonl``) that
-the Phase 2 proxy must relay unchanged.
+The output is used to capture golden fixtures (``testdata/mcp/*.jsonl``), and
+``ledgerline pin`` uses a function sink to capture raw tool definitions.
 """
 
 from __future__ import annotations
 
 import json
+from collections.abc import Callable
 from types import TracebackType
 from typing import Any, Literal, Self, TextIO
 
@@ -19,6 +21,7 @@ from mcp.client._transport import ReadStream, Transport, TransportStreams, Write
 from mcp.shared.message import SessionMessage
 
 Direction = Literal["sent", "received"]
+Sink = Callable[[Direction, dict[str, Any]], None]
 
 
 def encode(message: SessionMessage) -> dict[str, Any]:
@@ -27,19 +30,31 @@ def encode(message: SessionMessage) -> dict[str, Any]:
     return data
 
 
-class Wiretap:
-    """A transport wrapper that copies every message to ``out`` without changing it."""
+def jsonl_sink(out: TextIO) -> Sink:
+    """A sink that writes each message to ``out`` as one JSON line."""
 
-    def __init__(self, inner: Transport, out: TextIO) -> None:
+    def write(direction: Direction, message: dict[str, Any]) -> None:
+        out.write(
+            json.dumps({"dir": direction, "msg": message}, ensure_ascii=False, separators=(",", ":")) + "\n"
+        )
+        out.flush()
+
+    return write
+
+
+class Wiretap:
+    """A transport wrapper that copies every message to a sink without changing it.
+
+    ``sink`` is either a text file (messages are written as JSON lines) or a
+    function called with ``(direction, message)``.
+    """
+
+    def __init__(self, inner: Transport, sink: TextIO | Sink) -> None:
         self._inner = inner
-        self._out = out
+        self._sink: Sink = sink if callable(sink) else jsonl_sink(sink)
 
     def record(self, direction: Direction, message: SessionMessage) -> None:
-        line = json.dumps(
-            {"dir": direction, "msg": encode(message)}, ensure_ascii=False, separators=(",", ":")
-        )
-        self._out.write(line + "\n")
-        self._out.flush()
+        self._sink(direction, encode(message))
 
     async def __aenter__(self) -> TransportStreams:
         read, write = await self._inner.__aenter__()
