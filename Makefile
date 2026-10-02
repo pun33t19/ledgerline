@@ -5,7 +5,7 @@ PKGS     := ./...
 VERSION  ?= $(shell git describe --tags --always --dirty 2>/dev/null || echo v0.0.0-dev)
 LDFLAGS  := -X github.com/pun33t19/ledgerline/internal/version.Version=$(VERSION)
 
-.PHONY: help test test-short lint fmt vet vuln tidy build demo ci
+.PHONY: help test test-short lint fmt vet vuln tidy build build-demos fixtures fixtures-check demo ci
 
 help: ## Show available targets
 	@grep -E '^[a-zA-Z_-]+:.*?## ' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  %-12s %s\n", $$1, $$2}'
@@ -32,7 +32,16 @@ tidy: ## Tidy go.mod/go.sum
 	$(GO) mod tidy
 
 build: ## Build all binaries into ./bin
-	$(GO) build -ldflags "$(LDFLAGS)" -o bin/ $(PKGS)
+	$(GO) build -ldflags "$(LDFLAGS)" -o bin/ ./cmd/...
+
+build-demos: ## Build the demo MCP servers and client into ./bin
+	$(GO) build -ldflags "$(LDFLAGS)" -o bin/ ./cmd/demo-servers/... ./cmd/demo-client
+
+fixtures: ## Regenerate testdata/mcp wire fixtures
+	./scripts/capture-fixtures.sh
+
+fixtures-check: fixtures ## Fail if regenerated fixtures differ from the committed ones
+	git diff --exit-code -- testdata/mcp
 
 demo: ## Run the demo for the current phase (PHASE=N)
 	@test -n "$(PHASE)" || (echo "usage: make demo PHASE=N" && exit 1)

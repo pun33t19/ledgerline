@@ -10,6 +10,18 @@ linters:
     - revive
     - unconvert
     - unparam
+  settings:
+    errcheck:
+      exclude-functions:
+        # CLI output; a failed write to stdout is not actionable.
+        - fmt.Fprintf
+        - fmt.Fprintln
+        - fmt.Fprint
+  exclusions:
+    rules:
+      # Tests read files they just created in t.TempDir().
+      - path: _test\.go
+        linters: [gosec]
 
 formatters:
   enable:

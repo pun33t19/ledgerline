@@ -11,9 +11,12 @@ It's an evidence layer designed to plug into existing MCP/A2A gateways, not anot
 Requires Go 1.27+ and [golangci-lint](https://golangci-lint.run/) v2.
 
 ```sh
-make help   # list tasks
-make ci     # vet, lint, test
+make help            # list tasks
+make ci              # vet, lint, test
+./demos/phase1.sh    # tool poisoning and rug pull against the demo MCP servers
 ```
+
+The demo servers in `cmd/demo-servers/` include deliberately malicious ones (`poisoned`, `rugpull`) for testing Ledgerline. They only target a fake file under `~/.ledgerline-demo/`.
 
 ## License
 
