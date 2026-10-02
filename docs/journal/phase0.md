@@ -8,7 +8,7 @@ _Fill this in as you work through the Phase 0 reading. Keep it honest and short.
 - [ ] Saltzer & Schroeder (1975): least privilege, complete mediation
 - [ ] JSON-RPC 2.0 specification
 - [ ] Willison, "The lethal trifecta"
-- [ ] Tour of Go + Effective Go
+- [ ] Python refreshers: the `asyncio` tutorial (async/await, tasks), `typing` and dataclasses, pytest basics
 - [ ] Skim: Pipelock README, Agent Receipts spec, IETF draft-sharif-agent-audit-trail, agentgateway, ToolHive Cedar docs
 
 ## What I learned

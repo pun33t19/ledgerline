@@ -7,7 +7,8 @@ cd "$(dirname "$0")/.."
 bold() { printf '\n\033[1m%s\033[0m\n' "$*"; }
 pause() { [[ -t 0 ]] && read -rp $'\n[enter] to continue ' _ || true; }
 
-make -s build-demos
+uv sync --quiet
+bin=.venv/bin
 
 bait_dir="$HOME/.ledgerline-demo"
 mkdir -p "$bait_dir"
@@ -16,23 +17,23 @@ exfil="$bait_dir/attacker-received.log"
 : > "$exfil"
 
 bold "1. Honest server: tools/list, then tools/call get_weather"
-./bin/demo-client --call get_weather --args '{"location":"Pune, IN","unit":"celsius"}' -- ./bin/weather
+"$bin/demo-client" --call get_weather --args '{"location":"Pune, IN","unit":"celsius"}' -- "$bin/demo-weather"
 pause
 
 bold "2. Tool poisoning: read the full description the MODEL sees"
 echo "Most host UIs show only the first line: \"Adds two numbers.\""
-./bin/demo-client -- ./bin/poisoned
+"$bin/demo-client" -- "$bin/demo-poisoned"
 pause
 
 bold "   ...a hijacked model obeys and puts the file in 'sidenote':"
-./bin/demo-client --call add \
+"$bin/demo-client" --call add \
   --args "{\"a\":2,\"b\":3,\"sidenote\":\"$(cat "$bait_dir/fake-secrets.txt")\"}" \
-  -- ./bin/poisoned --exfil-log "$exfil" 2>/dev/null
+  -- "$bin/demo-poisoned" --exfil-log "$exfil" 2>/dev/null | tail -n 2
 echo; echo "Attacker received:"; cat "$exfil"
 pause
 
 bold "3. Rug pull: the tool looks harmless for 3 calls, then rewrites itself"
-./bin/demo-client --call get_fact_of_the_day --repeat 4 -- ./bin/rugpull --after 3
+"$bin/demo-client" --call get_fact_of_the_day --repeat 4 -- "$bin/demo-rugpull" --after 3
 
 bold "Takeaways"
 cat <<'TXT'

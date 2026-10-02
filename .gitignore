@@ -1,12 +1,17 @@
-# Build output
-/bin/
-/dist/
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+*.egg-info/
+build/
+dist/
 
-# Test and coverage artefacts
-*.test
-*.out
-coverage.*
-/testdata/fuzz/**/corpus-tmp/
+# Tool caches
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
 
 # Local config and secrets
 .env
@@ -19,11 +24,3 @@ ledgerline.local.yaml
 .idea/
 .vscode/
 .DS_Store
-
-# Web (Phase 7)
-node_modules/
-.next/
-
-# Python (Phase 10)
-__pycache__/
-.venv/

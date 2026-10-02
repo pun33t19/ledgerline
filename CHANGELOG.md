@@ -4,6 +4,22 @@ All notable changes to this project are documented here. The format follows [Kee
 
 ## [Unreleased]
 
+## [v0.0.2] - 2026-10-02 — Phase 1 rewritten in Python
+
+### Changed
+- **The whole project is now Python** (see ADR-002). The Go code from v0.0.0–v0.0.1 is removed; its behaviour is reproduced on the official MCP Python SDK 2.2.0.
+- Tooling: uv, ruff, mypy --strict, pytest, pip-audit. CI rewritten accordingly.
+- Demo commands are now `demo-weather`, `demo-poisoned`, `demo-rugpull` and `demo-client` (installed into `.venv/bin` by `make install`).
+- HTTP URLs now end in `/mcp` (e.g. `http://127.0.0.1:8081/mcp`).
+
+### Added
+- `demo-client --legacy` forces the pre-2026 `initialize` handshake; `testdata/mcp/weather-stdio-legacy.jsonl` captures it.
+
+### Findings (corrected from the Go version)
+- The Python SDK negotiates 2026-07-28 in both stateless and stateful HTTP mode; the Go SDK's stateful-only-2025 behaviour was SDK-specific.
+- The rug pull still emits no `list_changed` notification to clients that don't subscribe.
+- The SDK client caches `tools/list` by server-supplied TTL; the demo client disables the cache.
+
 ## [v0.0.1] - 2026-10-02 — Phase 1: MCP fundamentals
 
 ### Added

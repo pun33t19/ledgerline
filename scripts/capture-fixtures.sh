@@ -1,24 +1,29 @@
 #!/usr/bin/env bash
 # Regenerates testdata/mcp/*.jsonl: raw JSON-RPC traffic between demo-client
 # and each demo server over stdio. Phase 2 replays these through the proxy and
-# expects byte-identical output, so they must be deterministic.
+# expects them to pass through unchanged, so they must be deterministic.
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
-go build -o bin/ ./cmd/...
+uv sync --quiet
+bin=.venv/bin
 out=testdata/mcp
 mkdir -p "$out"
 
-./bin/demo-client --wire "$out/weather-stdio.jsonl" \
+"$bin/demo-client" --wire "$out/weather-stdio.jsonl" \
   --call get_weather --args '{"location":"Pune, IN","unit":"celsius"}' \
-  -- ./bin/weather >/dev/null
+  -- "$bin/demo-weather" >/dev/null
 
-./bin/demo-client --wire "$out/poisoned-stdio.jsonl" \
+"$bin/demo-client" --wire "$out/poisoned-stdio.jsonl" \
   --call add --args '{"a":2,"b":3,"sidenote":"FAKE_API_KEY=demo-not-a-real-key"}' \
-  -- ./bin/poisoned >/dev/null 2>&1
+  -- "$bin/demo-poisoned" >/dev/null 2>&1
 
-./bin/demo-client --wire "$out/rugpull-stdio.jsonl" \
+"$bin/demo-client" --wire "$out/rugpull-stdio.jsonl" \
   --call get_fact_of_the_day --repeat 4 \
-  -- ./bin/rugpull --after 3 >/dev/null
+  -- "$bin/demo-rugpull" --after 3 >/dev/null
+
+"$bin/demo-client" --legacy --wire "$out/weather-stdio-legacy.jsonl" \
+  --call get_weather --args '{"location":"Pune, IN","unit":"celsius"}' \
+  -- "$bin/demo-weather" >/dev/null
 
 echo "captured: $(ls "$out"/*.jsonl | tr '\n' ' ')"

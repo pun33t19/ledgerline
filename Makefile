@@ -1,50 +1,42 @@
 # Ledgerline developer tasks. Run `make help` for a list.
+# All Python runs through uv, which manages the virtualenv in .venv.
 
-GO       ?= go
-PKGS     := ./...
-VERSION  ?= $(shell git describe --tags --always --dirty 2>/dev/null || echo v0.0.0-dev)
-LDFLAGS  := -X github.com/pun33t19/ledgerline/internal/version.Version=$(VERSION)
+UV ?= uv
 
-.PHONY: help test test-short lint fmt vet vuln tidy build build-demos fixtures fixtures-check demo ci
+.PHONY: help install test lint fmt typecheck vuln fixtures fixtures-check demo ci
 
 help: ## Show available targets
-	@grep -E '^[a-zA-Z_-]+:.*?## ' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  %-12s %s\n", $$1, $$2}'
+	@grep -E '^[a-zA-Z_-]+:.*?## ' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  %-15s %s\n", $$1, $$2}'
 
-test: ## Run all tests with the race detector
-	$(GO) test -race -count=1 $(PKGS)
+install: ## Create .venv and install Ledgerline with dev tools
+	$(UV) sync
 
-test-short: ## Run fast tests only
-	$(GO) test -short $(PKGS)
+test: ## Run the test suite
+	$(UV) run pytest
 
-lint: ## Run golangci-lint
-	golangci-lint run
+lint: ## Check lint and formatting
+	$(UV) run ruff check .
+	$(UV) run ruff format --check .
 
-fmt: ## Format code
-	golangci-lint fmt
+fmt: ## Format code and apply safe lint fixes
+	$(UV) run ruff format .
+	$(UV) run ruff check --fix .
 
-vet: ## Run go vet
-	$(GO) vet $(PKGS)
+typecheck: ## Run mypy in strict mode
+	$(UV) run mypy
 
 vuln: ## Check dependencies for known vulnerabilities
-	$(GO) run golang.org/x/vuln/cmd/govulncheck@latest $(PKGS)
-
-tidy: ## Tidy go.mod/go.sum
-	$(GO) mod tidy
-
-build: ## Build all binaries into ./bin
-	$(GO) build -ldflags "$(LDFLAGS)" -o bin/ ./cmd/...
-
-build-demos: ## Build the demo MCP servers and client into ./bin
-	$(GO) build -ldflags "$(LDFLAGS)" -o bin/ ./cmd/demo-servers/... ./cmd/demo-client
+	$(UV) run pip-audit --skip-editable
 
 fixtures: ## Regenerate testdata/mcp wire fixtures
 	./scripts/capture-fixtures.sh
 
 fixtures-check: fixtures ## Fail if regenerated fixtures differ from the committed ones
 	git diff --exit-code -- testdata/mcp
+	@test -z "$$(git ls-files --others --exclude-standard testdata/mcp)" || (echo "untracked fixtures:"; git ls-files --others --exclude-standard testdata/mcp; exit 1)
 
-demo: ## Run the demo for the current phase (PHASE=N)
+demo: ## Run the demo for a phase (PHASE=N)
 	@test -n "$(PHASE)" || (echo "usage: make demo PHASE=N" && exit 1)
 	./demos/phase$(PHASE).sh
 
-ci: vet lint test ## Everything CI runs (except govulncheck)
+ci: lint typecheck test ## Everything CI runs except vuln and fixtures
