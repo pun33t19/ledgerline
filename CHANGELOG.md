@@ -4,6 +4,26 @@ All notable changes to this project are documented here. The format follows [Kee
 
 ## [Unreleased]
 
+## [v0.0.4] - 2026-10-03 — Phase 3: Attack Simulation Lab
+
+### Added
+- **`ledgerline ui`**: the Attack Simulation Lab in your browser (React + TypeScript, served by the Python API). Six attacks run **without and with Ledgerline side by side**: honest baseline, tool poisoning, rug pull, silent rug pull, new unreviewed tool, parser differential (duplicate keys).
+  - Live animated flow (host → Ledgerline → server), an inked-in ledger timeline per side, verdicts in bookkeeping red/green, and an attack path.
+  - Inspector side sheet with the raw JSON-RPC message and a plain-language explanation of each decision.
+  - Defence toggles (tool pinning, check before every call, strict parsing) to re-run with any control off.
+  - "What the model reads": what a person sees vs the full description, with hidden instructions highlighted and a diff against the approved version.
+  - A coverage page measuring which control stops which attack, plus OWASP MCP / Agentic Top 10 tags.
+  - Light and dark ledger themes, phone layout, keyboard focus, reduced-motion support.
+- `ledgerline.sim`: a scripted "obedient model", a runner (unprotected and protected at the same time, through the real `StdioProxy`), typed events, a scenario catalogue and coverage measurement (ADR-006). Every scenario is a regression test.
+- `ledgerline.api`: FastAPI with REST + WebSocket events, protected by `LocalGuardMiddleware` (loopback `Host` check, `Origin` check, session token exchanged for an HttpOnly cookie, CSP and other security headers).
+- Proxy event hooks (`proxy/events.py`): messages per hop and which control blocked or changed what.
+- `demo-rugpull --steal` and `--mode add-tool`; `LEDGERLINE_DEMO_SECRETS` sandboxing.
+- UI tooling: Vite, Tailwind, Radix, TanStack Query, Biome, Vitest, Playwright; TS types generated from the Python API with CI drift checks; `make web-ci`, `make e2e`, `make ui`.
+
+### Security
+- **`ledgerline proxy http` now rejects DNS-rebinding and browser-origin requests** (foreign `Host` or any `Origin`); `--allow-host` for non-loopback deployments.
+
+
 ### Changed (plan)
 - **The UI becomes Ledgerline's main face.** A new **Phase 3: Attack Simulation Lab** runs attacks unprotected and protected side by side in the browser, and every later phase ships its own UI slice. Phases 3–13 of the old plan are now Phases 4–14. Older changelog entries keep the numbering they were written with.
 - UI stack: React + TypeScript in `web/` (ADR-005), the second exception to Python-only after the Go log service.

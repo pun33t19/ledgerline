@@ -85,7 +85,7 @@ class SessionRequest(BaseModel):
 
 class Health(BaseModel):
     status: Literal["ok"] = "ok"
-    version: str = __version__
+    version: str  # no default: a default would put the version into the generated UI types
 
 
 def _step_title(step: Any) -> str:
@@ -204,7 +204,7 @@ def create_app(guard: LocalGuard, static_dir: Path = STATIC_DIR) -> FastAPI:
 
     @app.get("/api/health")
     async def health() -> Health:
-        return Health()
+        return Health(version=__version__)
 
     @app.post("/api/session", status_code=204)
     async def session(body: SessionRequest, response: Response) -> None:

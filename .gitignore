@@ -27,3 +27,10 @@ ledgerline.local.yaml
 
 # Generated guide (rebuild with `make guide`)
 docs/guide/*.pdf
+
+# Built UI (make web-build writes it here)
+src/ledgerline/api/static/
+# Web
+web/node_modules/
+web/test-results/
+web/playwright-report/

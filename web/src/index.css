@@ -1,0 +1,128 @@
+@import "tailwindcss";
+@import "@fontsource/atkinson-hyperlegible/400.css";
+@import "@fontsource/atkinson-hyperlegible/700.css";
+@import "@fontsource/atkinson-hyperlegible/400-italic.css";
+@import "@fontsource/courier-prime/400.css";
+@import "@fontsource/courier-prime/700.css";
+
+/*
+  Ledger book design tokens.
+  paper/rule: green ledger paper and its ruling. ink: the writing.
+  loss: red ink, as in bookkeeping (the attacker got something).
+  safe: ledger green. guard: bank-blue ink for Ledgerline itself.
+*/
+:root {
+  --paper: #f1f4ec;
+  --paper-raised: #f8faf5;
+  --rule: #c9d8c2;
+  --rule-strong: #9fbf95;
+  --ink: #1d2b3a;
+  --ink-muted: #556457;
+  --loss: #b42318;
+  --loss-wash: #f8e2df;
+  --safe: #2f6b4f;
+  --safe-wash: #dcebe1;
+  --guard: #24418a;
+  --guard-wash: #e1e7f5;
+  --focus: #24418a;
+  color-scheme: light;
+}
+
+:root[data-theme="dark"] {
+  --paper: #121c17;
+  --paper-raised: #17241d;
+  --rule: #24362c;
+  --rule-strong: #35503f;
+  --ink: #dde6dd;
+  --ink-muted: #9db0a2;
+  --loss: #f07167;
+  --loss-wash: #3a1d1b;
+  --safe: #6cc59a;
+  --safe-wash: #183327;
+  --guard: #8fa8f0;
+  --guard-wash: #1c2744;
+  --focus: #8fa8f0;
+  color-scheme: dark;
+}
+
+@theme inline {
+  --color-paper: var(--paper);
+  --color-paper-raised: var(--paper-raised);
+  --color-rule: var(--rule);
+  --color-rule-strong: var(--rule-strong);
+  --color-ink: var(--ink);
+  --color-ink-muted: var(--ink-muted);
+  --color-loss: var(--loss);
+  --color-loss-wash: var(--loss-wash);
+  --color-safe: var(--safe);
+  --color-safe-wash: var(--safe-wash);
+  --color-guard: var(--guard);
+  --color-guard-wash: var(--guard-wash);
+  --font-sans: "Atkinson Hyperlegible", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "Courier Prime", ui-monospace, "SFMono-Regular", Menlo, monospace;
+}
+
+html {
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-sans);
+  font-size: 16px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+}
+
+:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+/* A ruled ledger row: the rule under each entry is the structure of the page. */
+.ruled > * + * {
+  border-top: 1px solid var(--rule);
+}
+
+/* The double rule between the two ledger columns, in Ledgerline's ink. */
+.double-rule {
+  border-left: 3px double var(--guard);
+}
+
+/* Entries are inked in as they arrive. */
+@keyframes ink-in {
+  from {
+    opacity: 0;
+    transform: translateY(-2px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.ink-in {
+  animation: ink-in 220ms ease-out both;
+}
+
+/* A message travelling along the flow strip. */
+@keyframes travel {
+  from {
+    offset-distance: 0%;
+  }
+  to {
+    offset-distance: 100%;
+  }
+}
+.packet {
+  animation: travel 520ms ease-in-out both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ink-in,
+  .packet {
+    animation: none;
+  }
+}

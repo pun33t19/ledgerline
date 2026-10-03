@@ -15,7 +15,7 @@ The honest novelty is *not* "a signed agent log" or "an MCP firewall with receip
 
 **Decisions:** **Python for everything** (ADR-002), with two exceptions: the Phase 9 transparency-log service `tlogd` in **Go** on Tessera (ADR-002 amendment), and the **UI in React + TypeScript** under `web/` (ADR-005, 2026-10-03). UI work starts in Phase 3 and every later phase ships a UI slice (decided 2026-10-03; phases after 2 were renumbered +1). Full roadmap before the first public release (repo `pun33t19/ledgerline` stays private until Phase 14). ~20–25 h/week, ~28–30 weeks total. Commits authored only by the maintainer, never with Claude attribution.
 
-**Status:** Phase 0 ✅ (v0.0.0) · Phase 1 ✅ (Go v0.0.1, rewritten in Python as v0.0.2) · Phase 2 ✅ (v0.0.3) · next: Phase 3, Attack Simulation Lab.
+**Status:** Phase 0 ✅ (v0.0.0) · Phase 1 ✅ (Go v0.0.1, rewritten in Python as v0.0.2) · Phase 2 ✅ (v0.0.3) · Phase 3 ✅ (v0.0.4) · next: Phase 4, tamper-evident ledger.
 
 ---
 
@@ -107,7 +107,11 @@ Demo servers `demo-weather`, `demo-poisoned`, `demo-rugpull`, `demo-client` (`--
 
 ---
 
-## Phase 3 — Attack Simulation Lab v1 (Weeks 5–7) ★ new
+## Phase 3 — Attack Simulation Lab v1 ✅ (v0.0.4)
+
+**Built as planned, with these deliberate changes:** the 3-node flow strip is a small custom SVG (React Flow is kept for the Phase 10 delegation graph); tool approval from the UI (UI-07's approve button) and the full pinned-server registry (UI-25) move to Phase 8, because Lab runs use throwaway pins; Monaco arrives with the Phase 5 policy studio; the HTTP header-mismatch scenario was dropped because the SDK server already rejects those, so the duplicate-key parser attack demonstrates protocol hardening instead. Details: `CHANGELOG.md`, `docs/journal/phase3.md`.
+
+### Original plan
 
 The UI's first and most visible piece. It runs the attacks we already have **unprotected and protected, side by side**, animating every message and naming the control that intervened. It also closes the DNS-rebinding gap found during the Phase 2 review.
 

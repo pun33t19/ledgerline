@@ -156,18 +156,18 @@ def d_big_picture() -> Drawing:
         106,
         bw,
         36,
-        "Message log",
-        ["built in Phase 2"],
+        "Attack Lab UI",
+        ["built in Phase 3"],
         PROXY,
         PROXY_EDGE,
         mono_lines=False,
         title_size=8,
     )
     fut = [
-        ("Attack Lab UI", "Phase 3"),
         ("Tamper-evident ledger", "Phase 4"),
         ("Policy + taint", "Phase 5"),
         ("Human approval", "Phase 6"),
+        ("Merkle log, A2A…", "Phases 7–14"),
     ]
     for i, (t, ph) in enumerate(fut):
         box(
@@ -948,6 +948,102 @@ FILES: dict[str, tuple[str, str]] = {
     "tests/test_version.py": ("1", "Version format."),
     "tests/test_wiretap.py": ("1", "Recorder captures both directions; ids match."),
     "uv.lock": ("1", "Exact versions of every dependency (reproducible installs)."),
+    "demos/phase3.sh": ("3", "Builds the UI and opens the Lab, with things to try."),
+    "docs/adr/ADR-006-scripted-simulations.md": (
+        "3",
+        "Decision: the Lab's agent is scripted to obey; every scenario is a test.",
+    ),
+    "docs/journal/phase3.md": ("3", "Phase 3 reading, how to run the Lab and the UI in dev mode, findings."),
+    "scripts/export_openapi.py": (
+        "3",
+        "Writes the API's OpenAPI schema (input for the UI's generated types).",
+    ),
+    "src/ledgerline/api/__init__.py": ("3", "Package marker for the web API."),
+    "src/ledgerline/api/app.py": (
+        "3",
+        "FastAPI app: scenarios, runs, live WebSocket events, coverage; serves the built UI.",
+    ),
+    "src/ledgerline/api/security.py": (
+        "3",
+        "LocalGuardMiddleware: Host/Origin checks (DNS rebinding), session token, security headers.",
+    ),
+    "src/ledgerline/proxy/events.py": (
+        "3",
+        "ProxyEvents: the proxy reports messages per hop and which control decided what.",
+    ),
+    "src/ledgerline/sim/__init__.py": ("3", "Package marker for the attack simulator."),
+    "src/ledgerline/sim/agent.py": (
+        "3",
+        "The scripted obedient model and its tiny JSON-RPC client (Channel).",
+    ),
+    "src/ledgerline/sim/catalog.py": ("3", "The six Lab scenarios."),
+    "src/ledgerline/sim/coverage.py": ("3", "Measures which control stops which attack."),
+    "src/ledgerline/sim/events.py": (
+        "3",
+        "Typed run events (pydantic); the UI's types are generated from these.",
+    ),
+    "src/ledgerline/sim/runner.py": ("3", "Runs a scenario unprotected and protected at the same time."),
+    "src/ledgerline/sim/scenario.py": ("3", "What a scenario is: server, agent steps, expected outcomes."),
+    "tests/api/__init__.py": ("3", "Package marker."),
+    "tests/api/test_app.py": (
+        "3",
+        "API security (token, Host, Origin, headers), runs, WebSocket stream, UI serving.",
+    ),
+    "tests/sim/__init__.py": ("3", "Package marker."),
+    "tests/sim/test_scenarios.py": (
+        "3",
+        "Every scenario's outcomes; each control proven load-bearing; coverage.",
+    ),
+    "web/biome.json": ("3", "Lint and format rules for the UI (≈ Checkstyle)."),
+    "web/e2e/lab.spec.ts": ("3", "Playwright browser tests against the real `ledgerline ui`."),
+    "web/index.html": ("3", "The single HTML page the React app mounts into."),
+    "web/package-lock.json": ("3", "Exact npm dependency versions (≈ uv.lock)."),
+    "web/package.json": ("3", "The UI's dependencies and scripts (≈ pom.xml)."),
+    "web/playwright.config.ts": ("3", "Starts `ledgerline ui` with a known token for browser tests."),
+    "web/public/favicon.svg": ("3", "Browser tab icon."),
+    "web/src/App.tsx": ("3", "Routes: attacks list, run page, coverage."),
+    "web/src/api/client.ts": ("3", "fetch wrapper; exchanges the printed token for a session cookie."),
+    "web/src/api/queries.ts": ("3", "TanStack Query hooks: scenarios, coverage, start a run."),
+    "web/src/api/schema.d.ts": ("3", "GENERATED from the Python API (`make web-types`); never edit."),
+    "web/src/api/types.ts": ("3", "Friendly names for the generated types."),
+    "web/src/api/useRunEvents.ts": ("3", "Opens the run's WebSocket and folds events into a RunView."),
+    "web/src/components/AttackPath.tsx": ("3", "Launched → intercepted → outcome, per side."),
+    "web/src/components/ControlSwitches.tsx": ("3", "The defence toggles."),
+    "web/src/components/FlowStrip.tsx": ("3", "Animated host → (Ledgerline →) server strip."),
+    "web/src/components/Inspector.tsx": ("3", "Side sheet with the raw message and an explanation."),
+    "web/src/components/JsonView.tsx": ("3", "Pretty-printed, coloured JSON (as text, never HTML)."),
+    "web/src/components/Layout.tsx": ("3", "Header, navigation, theme switch."),
+    "web/src/components/LedgerEntries.test.tsx": (
+        "3",
+        "Unit tests: labels, humanize, message filtering, clicks.",
+    ),
+    "web/src/components/LedgerEntries.tsx": ("3", "The ruled timeline of each side."),
+    "web/src/components/Tags.tsx": ("3", "OWASP category tags."),
+    "web/src/components/ToolLens.test.tsx": (
+        "3",
+        "Unit tests: user vs model view, change and never-reviewed flags.",
+    ),
+    "web/src/components/ToolLens.tsx": (
+        "3",
+        "What you see vs what the model reads, plus the approved-vs-current diff.",
+    ),
+    "web/src/components/Verdict.tsx": ("3", "The outcome at the top of each column."),
+    "web/src/index.css": ("3", "Ledger design tokens (paper, rule, ink, loss, safe, guard), fonts, motion."),
+    "web/src/lib/controls.ts": ("3", "Plain-language names and explanations for the controls."),
+    "web/src/lib/runState.test.ts": ("3", "Unit tests for the run-state reducer."),
+    "web/src/lib/runState.ts": ("3", "Pure reducer: run events → what each column shows."),
+    "web/src/lib/theme.ts": ("3", "Light/dark theme: follows the system, remembers your choice."),
+    "web/src/main.tsx": ("3", "Entry point: theme, token exchange, React root."),
+    "web/src/pages/CoveragePage.tsx": ("3", "Which control stops which attack."),
+    "web/src/pages/LabPage.tsx": ("3", "The list of attacks (table on desktop, ruled list on phones)."),
+    "web/src/pages/NotFound.tsx": ("3", "Unknown address."),
+    "web/src/pages/Problem.tsx": ("3", "Explains errors, including 'open the Lab from its link'."),
+    "web/src/pages/RunPage.tsx": ("3", "One run: story, controls, side-by-side columns, tool lens."),
+    "web/src/test/setup.ts": ("3", "Adds DOM matchers to Vitest."),
+    "web/tsconfig.app.json": ("3", "Strict TypeScript settings for the app."),
+    "web/tsconfig.json": ("3", "TypeScript project references."),
+    "web/tsconfig.node.json": ("3", "TypeScript settings for config files and e2e tests."),
+    "web/vite.config.ts": ("3", "Build into the Python package; dev proxy to the API; Vitest settings."),
 }
 
 
@@ -975,7 +1071,7 @@ def cover(v: str) -> list:
         Spacer(1, 40),
         table(
             ["Covers", "Version", "Generated"],
-            [["Phases 0, 1 and 2", f"v{v}", date.today().isoformat()]],
+            [["Phases 0–3", f"v{v}", date.today().isoformat()]],
             [2, 1, 1],
         ),
         NextPageTemplate("page"),
@@ -1038,13 +1134,13 @@ def section_big_picture() -> list:
                 ],
                 [
                     "3",
-                    "next",
+                    "✓ v0.0.4",
                     "Attack Simulation Lab (UI)",
                     "Watch each attack run without and with Ledgerline, side by side, in the browser (React + TypeScript).",
                 ],
                 [
                     "4",
-                    "",
+                    "next",
                     "Tamper-evident ledger",
                     "Every call recorded before it runs, in a log nobody can secretly edit.",
                 ],
@@ -1759,11 +1855,396 @@ return FORWARD""",
     ]
 
 
+NOTE = colors.HexColor("#fff8dc")
+NOTE_EDGE = colors.HexColor("#c9a227")
+
+
+def d_phase3_architecture() -> Drawing:
+    d = Drawing(W, 330)
+    box(
+        d,
+        0,
+        268,
+        W,
+        52,
+        "Browser: React + TypeScript app (web/)",
+        ["LabPage · RunPage · CoveragePage   ←   useRunEvents → runState reducer"],
+        CLIENT,
+        CLIENT_EDGE,
+    )
+    arrow(d, W / 2 - 40, 268, W / 2 - 40, 244, "REST + WebSocket", label_dx=-48)
+    arrow(d, W / 2 + 40, 244, W / 2 + 40, 268, "events", color=MUTED, dashed=True, label_dx=30)
+    d.add(
+        Rect(
+            0,
+            6,
+            W,
+            236,
+            rx=6,
+            ry=6,
+            fillColor=colors.HexColor("#f7f6fd"),
+            strokeColor=PROXY_EDGE,
+            strokeWidth=1.2,
+        )
+    )
+    label(d, 8, 230, "PYTHON: ledgerline ui", 7.5, PROXY_EDGE, bold=True)
+    box(
+        d,
+        10,
+        192,
+        W - 20,
+        30,
+        "LocalGuardMiddleware → FastAPI (api/app.py) → RunManager",
+        ["Host / Origin / token checks · scenarios · runs · coverage · static UI"],
+    )
+    box(
+        d,
+        10,
+        150,
+        W - 20,
+        32,
+        "Runner (sim/runner.py)",
+        ["sandbox with a fake secret · pins tools · runs both sides at once · emits events"],
+    )
+    lw = (W - 30) / 2
+    box(d, 10, 96, lw, 44, "Unprotected lane", ["Agent → Channel → server process"], SERVER, SERVER_EDGE)
+    box(
+        d,
+        20 + lw,
+        96,
+        lw,
+        44,
+        "Protected lane",
+        ["Agent → Channel → StdioProxy", "(PinInterceptor + _SimEvents)"],
+    )
+    box(
+        d,
+        10,
+        46,
+        lw,
+        40,
+        "demo server (subprocess)",
+        ["writes stolen data to an exfil log"],
+        SERVER,
+        SERVER_EDGE,
+    )
+    box(d, 20 + lw, 46, lw, 40, "demo server (subprocess)", ["behind the real proxy"], SERVER, SERVER_EDGE)
+    arrow(d, 10 + lw / 2, 96, 10 + lw / 2, 86)
+    arrow(d, 20 + lw * 1.5, 96, 20 + lw * 1.5, 86)
+    box(
+        d,
+        10,
+        12,
+        W - 20,
+        26,
+        "_ExfilWatcher reads each side's attacker log → exfiltration events",
+        [],
+        DATA,
+        DATA_EDGE,
+        title_size=7.6,
+    )
+    return d
+
+
+def d_seq_lab_run() -> Drawing:
+    return sequence(
+        [
+            ("browser", "Browser (React)", CLIENT, CLIENT_EDGE),
+            ("api", "FastAPI app", PROXY, PROXY_EDGE),
+            ("runner", "Runner", PROXY, PROXY_EDGE),
+            ("servers", "Demo servers", SERVER, SERVER_EDGE),
+        ],
+        [
+            Msg("browser", "api", "POST /api/runs {scenario, controls}"),
+            Msg("api", "runner", "RunManager.start → background task"),
+            Msg("api", "browser", "{run_id} → navigate to /runs/:id", "reply"),
+            Msg("browser", "api", "WebSocket /api/runs/:id/events"),
+            Msg("runner", "servers", "pin: discover + tools/list (fresh server)", "proxy"),
+            Msg("runner", "api", "pinned event", "reply"),
+            Divider("both sides run at the same time"),
+            Msg("runner", "servers", "unprotected: agent → server directly"),
+            Msg("runner", "servers", "protected: agent → StdioProxy → server"),
+            Msg("runner", "api", "message / decision / exfiltration events", "reply"),
+            Msg("api", "browser", "each event as JSON (in order)", "reply"),
+            Msg("browser", "browser", "applyEvent() → RunView → re-render"),
+            Msg("runner", "api", "outcome ×2, run_finished", "reply"),
+            Msg("api", "browser", "last events; socket closes", "reply"),
+        ],
+    )
+
+
+def d_guard() -> Drawing:
+    d = Drawing(W, 120)
+    xs = [0, 112, 224, 336]
+    items = [
+        ("request arrives", ["HTTP or WebSocket"], CLIENT, CLIENT_EDGE),
+        ("Host allowed?", ["127.0.0.1:port,", "localhost:port"], NOTE, NOTE_EDGE),
+        ("Origin allowed?", ["absent, or this", "app's own origin"], NOTE, NOTE_EDGE),
+        ("token for /api?", ["cookie or Bearer", "(not /health, /session)"], NOTE, NOTE_EDGE),
+    ]
+    for x, (t, lines, f, e) in zip(xs, items, strict=True):
+        box(d, x, 62, 100, 46, t, lines, f, e, title_size=7.8, mono_lines=False)
+    for x in xs[:-1]:
+        arrow(d, x + 100, 85, x + 112, 85)
+    box(d, W - 45, 62, 45, 46, "app", [], PROXY, PROXY_EDGE)
+    arrow(d, 436, 85, W - 45, 85)
+    for x, outcome in ((162, "403: DNS rebinding"), (274, "403: foreign page"), (386, "401: no session")):
+        arrow(d, x, 62, x, 30, color=DANGER)
+        label(d, x, 18, outcome, 7, DANGER, "middle")
+    return d
+
+
+def section_phase3() -> list:
+    return [
+        PageBreak(),
+        Heading("7. Phase 3 — The Attack Simulation Lab", 0),
+        p(
+            "Phase 3 gives Ledgerline its face: `ledgerline ui` opens a browser app where each attack runs **twice at "
+            "once**, straight to a malicious server and through Ledgerline, so you can watch what each control stops."
+        ),
+        *hfig(
+            "Architecture",
+            1,
+            figure(
+                d_phase3_architecture(),
+                "Figure 15 — The Lab: a React app talking to the Python API, which runs both sides of every attack.",
+            ),
+        ),
+        table(
+            ["Layer", "Files", "Job"],
+            [
+                [
+                    "Browser",
+                    "`web/src/pages/*`, `web/src/components/*`",
+                    "Show runs: verdicts, flow, ledger, tool lens, coverage.",
+                ],
+                [
+                    "State",
+                    "`web/src/lib/runState.ts`",
+                    "Pure reducer: fold the event stream into what each column shows.",
+                ],
+                [
+                    "Transport",
+                    "`web/src/api/*`",
+                    "REST via TanStack Query; live events via WebSocket; token → cookie.",
+                ],
+                [
+                    "Security",
+                    "`api/security.py`",
+                    "Refuse foreign Host (DNS rebinding) and Origin; require the session token.",
+                ],
+                ["API", "`api/app.py`", "Scenarios, runs, events, coverage; serve the built UI."],
+                [
+                    "Simulator",
+                    "`sim/runner.py`, `sim/agent.py`",
+                    "Sandbox, pin, run both lanes, watch the attacker logs, emit events.",
+                ],
+                [
+                    "Scenarios",
+                    "`sim/catalog.py`, `sim/scenario.py`",
+                    "Six attacks, each with expected outcomes (and each a test).",
+                ],
+                [
+                    "Proxy hooks",
+                    "`proxy/events.py`",
+                    "The real proxy reports messages per hop and which control decided.",
+                ],
+            ],
+            [1.1, 2.6, 3.8],
+        ),
+        *hfig(
+            "The life of one run",
+            1,
+            figure(d_seq_lab_run(), "Figure 16 — From pressing Run to the verdicts on screen."),
+        ),
+        Heading("Flow chain: pressing Run on “Silent rug pull”", 1),
+        table(
+            ["#", "Where", "File → function", "What happens"],
+            [
+                [
+                    "1",
+                    "browser",
+                    "`LabPage.tsx` → `run()`",
+                    "`useStartRun` POSTs `/api/runs` with all controls on.",
+                ],
+                [
+                    "2",
+                    "python",
+                    "`security.py` → `LocalGuardMiddleware`",
+                    "Host is 127.0.0.1:port, no foreign Origin, session cookie matches the token.",
+                ],
+                [
+                    "3",
+                    "python",
+                    "`app.py` → `start_run` → `RunManager.start`",
+                    "Creates a run id, starts `_execute` in the app's task group, returns at once.",
+                ],
+                [
+                    "4",
+                    "browser",
+                    "`RunPage.tsx` → `useRunEvents`",
+                    "Navigates to `/runs/:id` and opens the WebSocket.",
+                ],
+                [
+                    "5",
+                    "python",
+                    "`runner.py` → `Runner.run`",
+                    "Writes a fake secret to a temp folder; `_pin` lists a fresh server's tools (what `ledgerline pin` would approve).",
+                ],
+                [
+                    "6",
+                    "python",
+                    "`Runner._direct` and `Runner._through_proxy`",
+                    "Both lanes start together. The protected lane wraps the real `StdioProxy` with `PinInterceptor` and `_SimEvents`.",
+                ],
+                [
+                    "7",
+                    "python",
+                    "`agent.py` → `Agent.run`",
+                    "Discover, list, call ×4. Call 4 on the protected side: the proxy re-checks the tool, finds it changed, **blocks**.",
+                ],
+                [
+                    "8",
+                    "python",
+                    "`_ExfilWatcher.poll`",
+                    "The unprotected server's attacker log gains the fake secret → exfiltration event.",
+                ],
+                [
+                    "9",
+                    "python",
+                    "`app.py` → `run_events`",
+                    "Streams every event as JSON, counting each as sent (no gaps), until `run_finished`.",
+                ],
+                [
+                    "10",
+                    "browser",
+                    "`runState.ts` → `applyEvent`",
+                    "Each event updates the view; React re-renders the flow strip, verdicts and ledger.",
+                ],
+            ],
+            [0.3, 0.8, 2.4, 4],
+        ),
+        Heading("The six scenarios", 1),
+        table(
+            ["Scenario", "What happens", "Without", "With", "Stopped by"],
+            [
+                ["Honest server", "A normal weather call", "safe", "safe", "—"],
+                [
+                    "Tool poisoning",
+                    "Hidden instructions in `add` ask for the secret",
+                    "stolen",
+                    "**stolen**",
+                    "nothing yet (approved at review); Phases 5–6",
+                ],
+                [
+                    "Rug pull",
+                    "Description rewritten after 3 calls; host re-lists",
+                    "stolen",
+                    "safe",
+                    "tool pinning (hides the changed tool)",
+                ],
+                [
+                    "Silent rug pull",
+                    "Same, host never re-lists; server steals server-side",
+                    "stolen",
+                    "safe",
+                    "check before every call",
+                ],
+                [
+                    "New unreviewed tool",
+                    "`sync_settings` appears and asks for the secret",
+                    "stolen",
+                    "safe",
+                    "tool pinning (unreviewed = hidden)",
+                ],
+                [
+                    "Parser differential",
+                    "One message with two `arguments` keys",
+                    "stolen",
+                    "safe",
+                    "strict parsing",
+                ],
+            ],
+            [1.4, 2.8, 0.8, 0.8, 2],
+        ),
+        callout(
+            "Finding: the official MCP server accepted the duplicate-key message and used the last copy. A checker that "
+            "read the first copy would have approved a harmless-looking call while the server received the secret.",
+            "ok",
+        ),
+        *hfig(
+            "Security of the local web servers",
+            1,
+            figure(
+                d_guard(),
+                "Figure 17 — LocalGuardMiddleware, used by `ledgerline ui` and (Host/Origin only) by `ledgerline proxy http`.",
+            ),
+        ),
+        Heading("React + TypeScript for Java developers", 1),
+        table(
+            ["In web/", "Java world", "Where you see it"],
+            [
+                ["`type X = { a: string }`", "record / interface", "`api/types.ts`"],
+                [
+                    "Union with a `type` field: `A | B`",
+                    "sealed interface + `switch` patterns",
+                    "`applyEvent` switches on `event.type`",
+                ],
+                [
+                    "Component: a function returning JSX",
+                    "a view/template fragment with a render method",
+                    "`Verdict.tsx`",
+                ],
+                ["props", "constructor parameters", "`<Verdict view={…} running={…} />`"],
+                ["`useState`", "a field whose change re-renders the view", "`showMessages` in `RunPage`"],
+                [
+                    "`useEffect`",
+                    "lifecycle hook (@PostConstruct / @PreDestroy)",
+                    "opening/closing the WebSocket",
+                ],
+                [
+                    "`useReducer` + reducer",
+                    "event-sourcing fold: `state = events.reduce(apply)`",
+                    "`useRunEvents` + `runState.ts`",
+                ],
+                ["TanStack Query", "a cached service client (RestTemplate + @Cacheable)", "`api/queries.ts`"],
+                ["React Router", "@RequestMapping for pages", "`App.tsx`"],
+                ["npm + package.json / lock", "Maven + pom.xml", "`web/package.json`"],
+                ["Vite", "build tool + dev server with hot reload", "`npm run dev`, `npm run build`"],
+                [
+                    "Vitest / Testing Library / Playwright",
+                    "JUnit / AssertJ for views / Selenium",
+                    "`*.test.tsx`, `e2e/lab.spec.ts`",
+                ],
+                ["openapi-typescript", "OpenAPI Generator (client models)", "`make web-types`"],
+                [
+                    "Tailwind class names",
+                    "utility CSS (no direct Java equivalent)",
+                    '`className="text-loss font-bold"`',
+                ],
+            ],
+            [2.2, 2.6, 2.6],
+        ),
+        callout(
+            "The UI makes no security decisions. Everything it shows comes from the Python API, and its types are generated "
+            "from the Python models, so if the backend changes shape CI fails until `make web-types` is re-run.",
+            "java",
+        ),
+        Heading("How to explain Phase 3", 2),
+        p(
+            "“`ledgerline ui` opens an Attack Simulation Lab. Each attack runs twice at the same time, straight to a malicious "
+            "server and through the real Ledgerline proxy, with a scripted agent that obeys any hidden instruction. You watch "
+            "both sides, inspect every message, switch controls off to see which one is load-bearing, and see measured "
+            "coverage. The local web servers are hardened against DNS rebinding.”"
+        ),
+    ]
+
+
 def section_testing() -> list:
     return [
         PageBreak(),
         *hfig(
-            "7. How it is tested",
+            "8. How it is tested",
             0,
             figure(d_test_pyramid(), "Figure 13 — The test pyramid used in this project."),
         ),
@@ -1804,6 +2285,26 @@ def section_testing() -> list:
                 ],
                 ["`tests/test_cli.py`", "integration", "`pin` review, change report, declining."],
                 ["`tests/demo/*`, `test_wiretap.py`", "unit + e2e", "Phase 1 servers, client and recorder."],
+                [
+                    "`tests/sim/test_scenarios.py`",
+                    "end-to-end",
+                    "Every Lab scenario's outcomes; each control proven load-bearing by switching it off; coverage.",
+                ],
+                [
+                    "`tests/api/test_app.py`",
+                    "integration",
+                    "Token, cookie, DNS-rebinding Host, foreign Origin, headers, WebSocket run stream, UI serving.",
+                ],
+                [
+                    "`web/src/**/*.test.ts(x)`",
+                    "unit (Vitest)",
+                    "Run-state reducer, ledger labels, tool lens.",
+                ],
+                [
+                    "`web/e2e/lab.spec.ts`",
+                    "browser (Playwright)",
+                    "Real `ledgerline ui`: refusal without link, side-by-side run, toggles, tool lens, coverage.",
+                ],
             ],
             [2.4, 1.3, 3.8],
         ),
@@ -1820,7 +2321,7 @@ def section_testing() -> list:
 def section_reproduce() -> list:
     return [
         PageBreak(),
-        Heading("8. Reproduce and test every phase", 0),
+        Heading("9. Reproduce and test every phase", 0),
         p("Run everything from the repository folder:"),
         code(
             "cd ~/App\\ projects/ledgerline\nmake install          # creates .venv and installs the commands"
@@ -1863,6 +2364,25 @@ cat /tmp/r.jsonl      # every message + alerts
 
 uv run pytest tests/pin tests/proxy tests/test_jsonrpc.py tests/test_cli.py -v    # Phase 2 tests only""",
         ),
+        Heading("Phase 3", 1),
+        code(
+            """make web-install                 # once: the UI's npm dependencies
+./demos/phase3.sh                # builds the UI and opens the Lab
+# expect: attack list · Run "Silent rug pull": left "The attacker got the secret",
+#         right "Stopped before any harm … Check before every call"
+#         · switch that control off and re-run: right side is now stolen too
+#         · "What the model reads" on Rug pull: changed description, hidden from the model
+#         · Coverage: "Stops it" in the right control column for each attack
+
+make test      # Python, including every scenario as a regression test
+make web-ci    # UI: generated types up to date, lint, type check, unit tests, build
+cd web && npx playwright install chromium   # once
+make e2e       # browser tests against the real ledgerline ui
+
+# UI development with hot reload (two terminals):
+uv run ledgerline ui --dev --no-browser --port 8765      # prints a token
+cd web && npm run dev                                     # http://127.0.0.1:5173/?token=<token>""",
+        ),
         Heading("Try it with a real AI host (optional)", 2),
         code(
             """.venv/bin/ledgerline pin --yes --lock ~/.ledgerline-demo/weather.lock -- "$PWD/.venv/bin/demo-weather"
@@ -1879,7 +2399,7 @@ claude mcp add weather-via-ledgerline -- "$PWD/.venv/bin/ledgerline" proxy stdio
 
 def section_limits() -> list:
     return [
-        Heading("9. Known limits and what comes next", 0),
+        Heading("10. Known limits and what comes next", 0),
         table(
             ["Limit today", "Addressed in"],
             [
@@ -1894,6 +2414,14 @@ def section_limits() -> list:
                 [
                     "Each call costs one extra `tools/list` round trip",
                     "Measured in Phase 12; `--no-verify-each-call` trades safety for speed",
+                ],
+                [
+                    "The Lab's agent is scripted to obey; it doesn't measure how real models behave",
+                    "Phase 11 (live-model mode and benchmarks)",
+                ],
+                [
+                    "Lab tool approvals are throwaway; there's no pinned-server registry in the UI yet",
+                    "Phase 8",
                 ],
                 [
                     "stdio: client messages queue behind a verification; a server that asks the client something mid-check times out (fails closed)",
@@ -1963,6 +2491,7 @@ def build() -> None:
         section_phase0,
         section_phase1,
         section_phase2,
+        section_phase3,
         section_testing,
         section_reproduce,
         section_limits,

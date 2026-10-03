@@ -8,7 +8,7 @@ It's an evidence layer designed to plug into existing MCP/A2A gateways, not anot
 
 ## Development
 
-Requires Python 3.12+ and [uv](https://docs.astral.sh/uv/).
+Requires Python 3.12+ and [uv](https://docs.astral.sh/uv/); the UI also needs Node 24.
 
 ```sh
 make install         # create .venv and install dependencies
@@ -16,7 +16,17 @@ make help            # list tasks
 make ci              # lint, type-check, test
 ./demos/phase1.sh    # tool poisoning and rug pull against the demo MCP servers
 ./demos/phase2.sh    # Ledgerline pins tool definitions and blocks the rug pull
+./demos/phase3.sh    # the Attack Simulation Lab in your browser (needs Node 24)
 ```
+
+## The Attack Simulation Lab
+
+```sh
+make web-install   # once: the UI's npm dependencies
+make ui            # build the UI and open the Lab (`ledgerline ui`)
+```
+
+Each attack runs twice at once, straight to a malicious demo server and through Ledgerline, so you can watch what each control stops. See [docs/journal/phase3.md](docs/journal/phase3.md).
 
 ## Using the proxy
 

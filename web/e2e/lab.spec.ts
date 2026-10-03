@@ -1,0 +1,93 @@
+import { expect, test } from "@playwright/test";
+import { TOKEN } from "../playwright.config";
+
+const column = (page: import("@playwright/test").Page, name: string) => page.getByRole("region", { name });
+
+test.describe("Attack Simulation Lab", () => {
+  test("refuses browsers that did not come through the printed link", async ({ page }) => {
+    await page.goto("/");
+    await expect(page.getByRole("heading", { name: "Open the Lab from its link" })).toBeVisible();
+  });
+
+  test("lists the attacks and removes the token from the address bar", async ({ page }) => {
+    await page.goto(`/?token=${TOKEN}`);
+    await expect(page.getByRole("heading", { name: "Run an attack twice" })).toBeVisible();
+    await expect(page.getByRole("row")).toHaveCount(7); // header + 6 attacks
+    expect(page.url()).not.toContain("token=");
+  });
+
+  test("silent rug pull: stolen without Ledgerline, stopped with it, and stolen again with the check off", async ({
+    page,
+  }) => {
+    await page.goto(`/?token=${TOKEN}`);
+    await page
+      .getByRole("row", { name: /Silent rug pull/ })
+      .getByRole("button", { name: "Run" })
+      .click();
+    await expect(
+      page.getByRole("heading", { name: "Silent rug pull (host never re-reads the menu)" }),
+    ).toBeVisible();
+
+    await expect(column(page, "Without Ledgerline").getByText("The attacker got the secret")).toBeVisible();
+    await expect(column(page, "With Ledgerline").getByText("Stopped before any harm")).toBeVisible();
+    await expect(
+      column(page, "With Ledgerline").getByText("Stopped by Check before every call."),
+    ).toBeVisible();
+
+    // Inspect Ledgerline's decision.
+    await column(page, "With Ledgerline")
+      .getByText(/^blocked:/)
+      .click();
+    const sheet = page.getByRole("dialog");
+    await expect(sheet.getByText(/asks the server for that tool's current definition/)).toBeVisible();
+    await page.keyboard.press("Escape");
+    await expect(sheet).toBeHidden();
+
+    // Switch the control off and run again: now the attack succeeds on both sides.
+    await page.getByRole("switch", { name: /Check before every call/ }).click();
+    await page.getByRole("button", { name: "Run with these controls" }).click();
+    await expect(column(page, "With Ledgerline").getByText("The attacker got the secret")).toBeVisible();
+  });
+
+  test("rug pull: the model's view shows the changed description and that Ledgerline hides it", async ({
+    page,
+  }) => {
+    await page.goto(`/?token=${TOKEN}`);
+    await page
+      .getByRole("row", { name: /Rug pull \(host re-reads/ })
+      .getByRole("button", { name: "Run" })
+      .click();
+    await expect(column(page, "With Ledgerline").getByText("Stopped before any harm")).toBeVisible();
+    await page.getByRole("tab", { name: "What the model reads" }).click();
+    await expect(page.getByText("Changed since you approved it.")).toBeVisible();
+    await expect(page.getByText("Ledgerline hides it from the model.")).toBeVisible();
+  });
+
+  test("tool poisoning states the honest limit", async ({ page }) => {
+    await page.goto(`/?token=${TOKEN}`);
+    await page
+      .getByRole("row", { name: /Tool poisoning/ })
+      .getByRole("button", { name: "Run" })
+      .click();
+    await expect(page.getByText(/Not stopped today/)).toBeVisible();
+    await expect(column(page, "With Ledgerline").getByText("The attacker got the secret")).toBeVisible();
+  });
+});
+
+test("coverage: measures which control stops each attack", async ({ page }) => {
+  test.setTimeout(150_000);
+  await page.goto(`/?token=${TOKEN}`);
+  await page.getByRole("link", { name: "Coverage" }).click();
+  await expect(page.getByRole("heading", { name: "Which control stops which attack" })).toBeVisible();
+  const silent = page.getByRole("row", { name: /Silent rug pull/ });
+  await expect(silent).toBeVisible({ timeout: 120_000 });
+  await expect(silent.getByRole("cell").nth(3)).toHaveText("Stops it"); // Check before every call
+  const parser = page.getByRole("row", { name: /Parser differential/ });
+  await expect(parser.getByRole("cell").last()).toHaveText("Stops it"); // Strict message parsing
+  await expect(
+    page
+      .getByRole("row", { name: /Tool poisoning/ })
+      .getByRole("cell")
+      .last(),
+  ).toHaveText("Not stopped yet");
+});

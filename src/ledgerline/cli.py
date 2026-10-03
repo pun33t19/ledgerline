@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import argparse
 import logging
+import os
 import sys
 from contextlib import ExitStack
 from pathlib import Path
@@ -182,7 +183,8 @@ def run_ui(args: argparse.Namespace) -> int:
     from ledgerline.api.app import create_app
     from ledgerline.api.security import LocalGuard, loopback_hosts, loopback_origins
 
-    token = secrets.token_urlsafe(24)
+    # A fixed token from the environment is for automated browser tests; normally it is random.
+    token = os.environ.get("LEDGERLINE_UI_TOKEN") or secrets.token_urlsafe(24)
     origins = loopback_origins(args.port)
     if args.dev:
         origins |= loopback_origins(5173)
