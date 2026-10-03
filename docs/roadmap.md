@@ -328,3 +328,18 @@ Replaces the old "auditor console" phase: the views exist by now, so this phase 
 3. `demos/supabase.sh` (and the same scenario in the Lab): allowed ticket read → taint → hijacked query → `needs_approval` → deny in the approval inbox → agent gets `isError`.
 4. `ledgerline verify --run <id>` passes; `export` + `verify --offline` passes; superuser UPDATE → verify fails at that seq.
 5. Playwright e2e (Lab, ledger explorer, approval inbox, Merkle viewer) and the incident corpus pass; Jaeger trace ID equals ledger `trace_id`.
+
+---
+
+## Post-v0.1 backlog (not scheduled)
+
+Decided 2026-10-03: **keep the plan on course**; once the polished v0.1 ships, decide which Pipelock-style features to add for an "all-round" product. Triage for that discussion:
+
+| Group | Candidate features | Fit | Rough effort |
+|---|---|---|---|
+| Action-layer checks | Secret detection + redaction in tool args/results; injection scanning of tool results as a taint signal; canary tokens; heuristic flags in pin review; default rule pack (destructive deletes, credential access, reverse shells); tool-call chain rules; budgets/loop limits; kill switch; observe-only mode + presets; server-binary integrity + command allow-list; learn-and-lock policy generation; `explain`; signed posture + score; scan API; SIEM export; Agent Card drift; discover/wrap host configs | Excellent | Moderate, spread out |
+| Egress firewall | HTTP fetch/forward/WebSocket proxy, URL pipeline, SSRF/DNS-rebinding, entropy, rate limits, streaming scans | Good | ~3 weeks |
+| Containment | Wrap existing sandboxes (bubblewrap, sandbox-exec, Docker) for servers and agents | Medium | ~1–2 weeks |
+| Heavy / enterprise | TLS interception, host containment, fleet control plane, legal hold, media policy | Low | Months |
+
+Source: the full Pipelock re-check in `docs/prior-art.md`.
