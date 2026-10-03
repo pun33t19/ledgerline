@@ -6,7 +6,7 @@
 
 ## Context
 
-Ledgerline fingerprints JSON: tool definitions now, ledger entries and arguments from Phase 3 on. A fingerprint is only useful if *anyone* (an auditor's tool, a verifier in another language, a future version of Ledgerline) computes the same bytes from the same data. Ordinary JSON serialisation varies: key order, whitespace, number formatting (`1.0` vs `1`, `1e30` vs `1e+30`), and string escaping all differ between libraries and settings. Phase 1's demo client used `json.dumps(sort_keys=True)`, which fixes key order only.
+Ledgerline fingerprints JSON: tool definitions now, ledger entries and arguments from Phase 4 on. A fingerprint is only useful if *anyone* (an auditor's tool, a verifier in another language, a future version of Ledgerline) computes the same bytes from the same data. Ordinary JSON serialisation varies: key order, whitespace, number formatting (`1.0` vs `1`, `1e30` vs `1e+30`), and string escaping all differ between libraries and settings. Phase 1's demo client used `json.dumps(sort_keys=True)`, which fixes key order only.
 
 ## Decision
 
@@ -14,7 +14,7 @@ Every hash in Ledgerline is `SHA-256(RFC 8785(value))`, using the [JSON Canonica
 
 ## Consequences
 
-- Fingerprints are reproducible in any language with a JCS library. The IETF agent-audit-trail draft and Agent Receipts use JCS too, which eases Phase 12 mapping.
+- Fingerprints are reproducible in any language with a JCS library. The IETF agent-audit-trail draft and Agent Receipts use JCS too, which eases Phase 13 mapping.
 - A server that sends huge integers in a tool definition can't be pinned. That's acceptable: fail closed.
 - `ledgerline pin` and the proxy must hash the *raw* JSON from the wire, not SDK objects (which can add or drop fields). Both do.
 

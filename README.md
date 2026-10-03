@@ -2,7 +2,7 @@
 
 Ledgerline makes every AI-agent action leave evidence. It sits between an agent and the tools and agents it calls, checks each call against least-privilege policy, pauses risky calls for human approval, and records every call, decision, approval and delegation hop in a tamper-evident log that auditors can verify offline.
 
-It's an evidence layer designed to plug into existing MCP/A2A gateways, not another gateway. See [ADR-001](docs/adr/ADR-001-scope-evidence-layer-not-gateway.md), [prior art](docs/prior-art.md) and the [roadmap](docs/roadmap.md).
+It's an evidence layer designed to plug into existing MCP/A2A gateways, not another gateway. Its UI, starting with an Attack Simulation Lab that shows each attack with and without Ledgerline, is the main way to see what it does. See [ADR-001](docs/adr/ADR-001-scope-evidence-layer-not-gateway.md), [prior art](docs/prior-art.md) and the [roadmap](docs/roadmap.md).
 
 > **Status:** pre-alpha, under active development. Nothing here is ready for production use.
 

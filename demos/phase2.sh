@@ -55,7 +55,7 @@ cat <<'TXT'
   sees them.
 - Pinning catches CHANGES. A server that is malicious from day one (like
   demo-poisoned) gets pinned as-is, which is why `ledgerline pin` shows every
-  description in full for a person to read. Argument rules (Phase 4) and
-  human approval (Phase 5) cover that case.
-- This log is plain JSON anyone can edit. Phase 3 makes it tamper-evident.
+  description in full for a person to read. Argument rules (Phase 5) and
+  human approval (Phase 6) cover that case.
+- This log is plain JSON anyone can edit. Phase 4 makes it tamper-evident.
 TXT

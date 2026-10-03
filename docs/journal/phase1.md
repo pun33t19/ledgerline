@@ -36,7 +36,7 @@ Run `make install` once first; it puts the demo commands in `.venv/bin/`.
 - **SDKs differ.** The Go SDK only offered 2026-07-28 over stateless HTTP. The Python SDK offers it in both stateless and stateful modes. Lesson: test the proxy against more than one client and server implementation.
 - **Rug pulls can be silent.** Under 2026-07-28, a tools-changed announcement only reaches clients that open a `subscriptions/listen` stream. Our client didn't, and the capture shows no notification. A host that never re-lists tools never learns the description changed. **Pinning can't rely on notifications.** It must hash every `tools/list` response and check the pin again before forwarding each `tools/call`.
 - **Clients cache tool lists.** The Python SDK caches `tools/list` for as long as the server's `ttlMs` hint says. Our servers send 0, but a malicious server could send a long TTL to keep clients on a stale menu. The demo client disables the cache. Ledgerline must hash what the *server* actually sends, never a client's cached copy.
-- **The poisoned call is just valid JSON.** `{"a":2,"b":3,"sidenote":"FAKE_API_KEY=..."}` matches the schema, so nothing at the protocol level marks it as wrong. Only policy on arguments (Phase 4) or a human seeing the full arguments (Phase 5) catches it.
+- **The poisoned call is just valid JSON.** `{"a":2,"b":3,"sidenote":"FAKE_API_KEY=..."}` matches the schema, so nothing at the protocol level marks it as wrong. Only policy on arguments (Phase 5) or a human seeing the full arguments (Phase 6) catches it.
 - **The model asks; the host does.** The demo client fills the arguments that a hijacked model would produce. The server can't tell who decided them, which is the confused deputy from Phase 0.
 
 ## What surprised me

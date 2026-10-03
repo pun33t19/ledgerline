@@ -1,6 +1,6 @@
 """A plain JSON Lines log of everything the proxy sees, plus pin alerts.
 
-Temporary: Phase 3 replaces this with the tamper-evident ledger. Unlike the
+Temporary: Phase 4 replaces this with the tamper-evident ledger. Unlike the
 ledger, anyone can edit this file afterwards without detection.
 
 Each line is one of::

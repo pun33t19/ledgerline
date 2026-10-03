@@ -164,10 +164,10 @@ def d_big_picture() -> Drawing:
         title_size=8,
     )
     fut = [
-        ("Tamper-evident ledger", "Phase 3"),
-        ("Policy + taint", "Phase 4"),
-        ("Human approval", "Phase 5"),
-        ("Telemetry, console…", "Phases 6–7"),
+        ("Attack Lab UI", "Phase 3"),
+        ("Tamper-evident ledger", "Phase 4"),
+        ("Policy + taint", "Phase 5"),
+        ("Human approval", "Phase 6"),
     ]
     for i, (t, ph) in enumerate(fut):
         box(
@@ -848,7 +848,7 @@ FILES: dict[str, tuple[str, str]] = {
     ),
     "docs/adr/ADR-002-python-for-everything.md": (
         "1",
-        "Decision: Python everywhere, except a Go log service in Phase 8.",
+        "Decision: Python everywhere, except a Go log service in Phase 9.",
     ),
     "docs/adr/ADR-003-canonical-json-rfc8785.md": ("2", "Decision: every hash uses RFC 8785 canonical JSON."),
     "docs/adr/ADR-004-tool-pinning-enforcement.md": (
@@ -861,7 +861,15 @@ FILES: dict[str, tuple[str, str]] = {
     "docs/journal/phase1.md": ("1", "Phase 1 reading, manual tests and findings."),
     "docs/journal/phase2.md": ("2", "Phase 2 reading, manual tests, findings and a known limitation."),
     "docs/prior-art.md": ("0", "Similar projects and what is left for Ledgerline to do."),
-    "docs/roadmap.md": ("1", "The master plan, Phases 0–13."),
+    "docs/roadmap.md": ("1", "The master plan, Phases 0–14 (UI from Phase 3)."),
+    "docs/research/ui-research.md": (
+        "2",
+        "Research behind the UI: existing tools, design principles, feature catalogue UI-01…UI-36.",
+    ),
+    "docs/adr/ADR-005-ui-react-typescript.md": (
+        "2",
+        "Decision: the UI is React + TypeScript (second exception to Python-only).",
+    ),
     "pyproject.toml": ("1", "Project identity card (like pom.xml): dependencies, commands, tool settings."),
     "scripts/capture-fixtures.sh": ("1", "Re-records the wire fixtures in testdata/mcp/."),
     "src/ledgerline/__init__.py": ("1", "Marks the package; holds `__version__`."),
@@ -905,7 +913,7 @@ FILES: dict[str, tuple[str, str]] = {
     ),
     "src/ledgerline/proxy/jsonl_log.py": (
         "2",
-        "`--log`: plain JSONL of messages and alerts (Phase 3 replaces it).",
+        "`--log`: plain JSONL of messages and alerts (Phase 4 replaces it).",
     ),
     "src/ledgerline/proxy/sse.py": ("2", "Splits server-sent-event streams into messages."),
     "src/ledgerline/proxy/stdio.py": ("2", "stdio relay: two loops, verification requests, shutdown."),
@@ -1027,17 +1035,28 @@ def section_big_picture() -> list:
                 [
                     "3",
                     "next",
-                    "Tamper-evident ledger",
-                    "Every call recorded before it runs, in a log nobody can secretly edit.",
+                    "Attack Simulation Lab (UI)",
+                    "Watch each attack run without and with Ledgerline, side by side, in the browser (React + TypeScript).",
                 ],
                 [
                     "4",
                     "",
+                    "Tamper-evident ledger",
+                    "Every call recorded before it runs, in a log nobody can secretly edit.",
+                ],
+                [
+                    "5",
+                    "",
                     "Policy + taint",
                     "Rules on arguments (“SELECT on tickets only”), stricter after untrusted input.",
                 ],
-                ["5", "", "Human approval", "Risky calls wait for a person; silence means no."],
-                ["6–13", "", "Telemetry, console, Merkle log, A2A, eval, launch", "See docs/roadmap.md."],
+                ["6", "", "Human approval", "Risky calls wait for a person; silence means no."],
+                [
+                    "7–14",
+                    "",
+                    "Telemetry, app shell, Merkle log, A2A, eval, launch",
+                    "Every phase also ships its UI slice. See docs/roadmap.md.",
+                ],
             ],
             [0.6, 0.9, 2, 4.5],
         ),
@@ -1522,14 +1541,14 @@ def section_phase2() -> list:
                 [
                     "Logging",
                     "`proxy/jsonl_log.py`",
-                    "Every message and alert as JSON lines (editable — Phase 3 fixes that).",
+                    "Every message and alert as JSON lines (editable — Phase 4 fixes that).",
                 ],
             ],
             [1.1, 2.6, 3.8],
         ),
         callout(
             "The interceptor chain is the Servlet `Filter` / Spring `HandlerInterceptor` pattern. Each check is a "
-            "separate class; Phases 3–6 add more interceptors (ledger, policy, approvals, telemetry) without touching the transports.",
+            "separate class; Phases 4–7 add more interceptors (ledger, policy, approvals, telemetry) without touching the transports.",
             "java",
         ),
         *hfig(
@@ -1700,7 +1719,7 @@ return FORWARD""",
         ),
         callout(
             "Pinning detects **change**, not **malice**: if you approve `demo-poisoned` as it is, it stays poisoned. "
-            "That is why `ledgerline pin` shows every description in full. Phases 4–5 handle the rest.",
+            "That is why `ledgerline pin` shows every description in full. Phases 5–6 handle the rest.",
             "warn",
         ),
         Heading("What changed compared with Phase 1", 1),
@@ -1862,19 +1881,19 @@ def section_limits() -> list:
             [
                 [
                     "Pinning detects change, not malice (an approved poisoned tool stays poisoned)",
-                    "Phase 4 (argument rules + taint), Phase 5 (human approval)",
+                    "Phase 5 (argument rules + taint), Phase 6 (human approval)",
                 ],
                 [
                     "`--log` is plain JSON anyone can edit",
-                    "Phase 3 (hash-chained ledger + `ledgerline verify`)",
+                    "Phase 4 (hash-chained ledger + `ledgerline verify`)",
                 ],
                 [
                     "Each call costs one extra `tools/list` round trip",
-                    "Measured in Phase 11; `--no-verify-each-call` trades safety for speed",
+                    "Measured in Phase 12; `--no-verify-each-call` trades safety for speed",
                 ],
                 [
                     "stdio: client messages queue behind a verification; a server that asks the client something mid-check times out (fails closed)",
-                    "Revisit in Phase 5",
+                    "Revisit in Phase 6",
                 ],
                 ["One lock file per upstream server; server names are self-reported", "By design (ADR-004)"],
             ],

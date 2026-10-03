@@ -20,8 +20,8 @@ Phase 1 showed three things: a rug pull sends no `list_changed` notification to 
 ## Consequences
 
 - Silent mid-session rug pulls (the Deadbugz pattern) are caught on the next call, even for hosts that never re-list.
-- Every call costs one extra round trip to the server. `--no-verify-each-call` removes it, and a test documents that this lets a silent rug pull through. Phase 11 measures the cost.
-- Pinning detects *change*, not *malice*: a server that's malicious from the start gets pinned if the reviewer approves it. Argument policies (Phase 4) and approvals (Phase 5) cover that case.
+- Every call costs one extra round trip to the server. `--no-verify-each-call` removes it, and a test documents that this lets a silent rug pull through. Phase 12 measures the cost.
+- Pinning detects *change*, not *malice*: a server that's malicious from the start gets pinned if the reviewer approves it. Argument policies (Phase 5) and approvals (Phase 6) cover that case.
 - One lock file pins one upstream server. Server names are self-reported, so they're informational only.
 
 ## Alternatives considered

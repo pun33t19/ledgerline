@@ -25,7 +25,7 @@ It will not compete on routing, load balancing, LLM provider proxying, content m
 ## Consequences
 
 - Scope stays small enough for one engineer over ~24 weeks.
-- Value depends on adoption by gateways and on the schema being accepted upstream, so adapters (Phase 11) and the spec (Phase 12) are first-class deliverables, not extras.
+- Value depends on adoption by gateways and on the schema being accepted upstream, so adapters (Phase 12) and the spec (Phase 13) are first-class deliverables, not extras.
 - Our own proxy must stay minimal. Feature requests that belong in a gateway get redirected to one.
 - Public claims must stay precise: never "first tamper-evident agent firewall".
 

@@ -4,6 +4,14 @@ All notable changes to this project are documented here. The format follows [Kee
 
 ## [Unreleased]
 
+### Changed (plan)
+- **The UI becomes Ledgerline's main face.** A new **Phase 3: Attack Simulation Lab** runs attacks unprotected and protected side by side in the browser, and every later phase ships its own UI slice. Phases 3–13 of the old plan are now Phases 4–14. Older changelog entries keep the numbering they were written with.
+- UI stack: React + TypeScript in `web/` (ADR-005), the second exception to Python-only after the Go log service.
+- Research behind the UI: `docs/research/ui-research.md` (existing tools, design principles, feature catalogue UI-01…UI-36).
+
+### Added
+- Beginner's guide PDF generator (`make guide`, `docs/guide/`).
+
 ## [v0.0.3] - 2026-10-02 — Phase 2: interceptor proxy + tool pinning
 
 ### Added

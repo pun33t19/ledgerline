@@ -26,14 +26,14 @@ What already exists close to Ledgerline, and what that leaves for us to build. R
 2. **Merkle log with inclusion + consistency proofs and a witness** is still open in agent-audit OSS. Pipelock is heading towards Rekor anchoring, though, and the IETF draft specifies optional RFC 6962 epochs. Our contribution is a **working, witnessed implementation** plus an offline verifier, not the idea. Re-check Pipelock before launch.
 3. **Policy-decision provenance.** Pipelock records a policy hash. The IETF draft requires pre-execution records for denials and escalations. Nobody we checked binds *engine + bundle digest + input digest + matched rule + human approver* into one signed record. That binding is ours.
 4. **Delegation lineage.** Agent Receipts and the IETF draft both have delegation fields. Joining MCP calls to A2A hops under OAuth actor claims (`act`, RFC 8693) was not found anywhere.
-5. **Schema convergence.** Don't invent a fourth incompatible format. Our event schema should map field-for-field onto the IETF draft and Agent Receipts (Phase 12), and use RFC 8785 JCS as they both do.
+5. **Schema convergence.** Don't invent a fourth incompatible format. Our event schema should map field-for-field onto the IETF draft and Agent Receipts (Phase 13), and use RFC 8785 JCS as they both do.
 
 ## Decisions this memo feeds
 
 - ADR-001: evidence layer, not a gateway. The gateways (agentgateway, ToolHive, ContextForge) are mature. Adapt to them.
-- Phase 3: use RFC 8785 JCS for hashing. The IETF draft and Agent Receipts both do.
-- Phase 3: decide genesis `prev_hash` (IETF draft uses `null`, Aileron uses all-zeros). Prefer the IETF convention unless there's a reason not to.
-- Phase 8: consider ECDSA P-256 alongside Ed25519 for IETF-draft compatibility.
+- Done in Phase 2 (ADR-003): RFC 8785 JCS for all hashing, as the IETF draft and Agent Receipts do.
+- Phase 4: decide genesis `prev_hash` (IETF draft uses `null`, Aileron uses all-zeros). Prefer the IETF convention unless there's a reason not to.
+- Phase 9: consider ECDSA P-256 alongside Ed25519 for IETF-draft compatibility.
 
 ## Open items to verify
 

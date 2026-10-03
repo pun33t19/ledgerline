@@ -52,8 +52,8 @@ Run `make install` first.
 
 -
 
-## Questions to carry into Phase 3
+## Questions to carry into Phase 4
 
 - The JSONL log can be edited by anyone. What exactly should a tamper-evident entry contain, and when must it be written relative to forwarding?
-- Per-call verification doubles round trips. How much latency does it add (measure in Phase 11)?
-- Known limitation (stdio): while the proxy waits for its own pre-call `tools/list`, later client messages queue behind it. If a server asked the client something (e.g. elicitation) before answering that `tools/list`, the check would time out after 30 s and the call would be **blocked** (fails closed, never open). Handling each client request in its own task would remove this; revisit with Phase 5, which also needs to hold requests.
+- Per-call verification doubles round trips. How much latency does it add (measure in Phase 12)?
+- Known limitation (stdio): while the proxy waits for its own pre-call `tools/list`, later client messages queue behind it. If a server asked the client something (e.g. elicitation) before answering that `tools/list`, the check would time out after 30 s and the call would be **blocked** (fails closed, never open). Handling each client request in its own task would remove this; revisit with Phase 6, which also needs to hold requests.
