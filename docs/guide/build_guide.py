@@ -862,6 +862,10 @@ FILES: dict[str, tuple[str, str]] = {
     "docs/journal/phase2.md": ("2", "Phase 2 reading, manual tests, findings and a known limitation."),
     "docs/prior-art.md": ("0", "Similar projects and what is left for Ledgerline to do."),
     "docs/roadmap.md": ("1", "The master plan, Phases 0–14 (UI from Phase 3)."),
+    "docs/readme-blueprint.md": (
+        "2",
+        "Plan for the public README at launch: structure, comparison vs Pipelock and others, SVG diagrams.",
+    ),
     "docs/research/ui-research.md": (
         "2",
         "Research behind the UI: existing tools, design principles, feature catalogue UI-01…UI-36.",
