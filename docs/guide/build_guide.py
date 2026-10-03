@@ -832,6 +832,7 @@ FILES: dict[str, tuple[str, str]] = {
     ".gitignore": ("0", "Files git must never track: `.venv/`, caches, secrets, the generated guide PDF."),
     ".python-version": ("1", "Tells uv to use Python 3.14 (like a toolchain version in Maven)."),
     "CHANGELOG.md": ("0", "What changed in each version, phase by phase."),
+    "CLAUDE.md": ("3", "Orientation for AI coding assistants: commands, architecture, invariants."),
     "LICENSE": ("0", "Apache-2.0 open-source licence."),
     "Makefile": ("0", "Short commands: `make install`, `make ci`, `make test`, `make guide`…"),
     "README.md": ("0", "Front page: what Ledgerline is and how to run it."),
