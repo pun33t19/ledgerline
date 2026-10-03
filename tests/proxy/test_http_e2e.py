@@ -133,3 +133,31 @@ def test_check_routing_headers(headers: dict[str, str], problem: str | None) -> 
     else:
         assert result is not None
         assert problem in result
+
+
+async def test_proxy_rejects_dns_rebinding_and_browser_origins(
+    http_server: Spawn, spawn: Spawn, tmp_path: Path
+) -> None:
+    lock = tmp_path / "ledgerline.lock"
+    upstream = http_server("demo-weather")
+    pin_http(lock, upstream)
+    proxy = spawn(
+        "ledgerline", "proxy", "http", "--upstream", upstream, "--listen", "{addr}", "--lock", str(lock)
+    )
+    body = {"jsonrpc": "2.0", "id": 1, "method": "tools/list", "params": {"_meta": MODERN_META}}
+    base = {
+        "mcp-protocol-version": "2026-07-28",
+        "mcp-method": "tools/list",
+        "accept": "application/json, text/event-stream",
+    }
+
+    async with httpx.AsyncClient() as client:
+        rebound = await client.post(proxy, json=body, headers={**base, "Host": "attacker.example:9000"})
+        from_page = await client.post(
+            proxy, json=body, headers={**base, "Origin": "https://attacker.example"}
+        )
+        normal = await client.post(proxy, json=body, headers=base)
+
+    assert rebound.status_code == 403
+    assert from_page.status_code == 403
+    assert normal.status_code == 200

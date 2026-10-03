@@ -97,13 +97,20 @@ def _is_valid_id(value: Any) -> bool:
     return isinstance(value, str) or (isinstance(value, int) and not isinstance(value, bool))
 
 
-def parse(raw: bytes) -> Message:
-    """Parse one JSON-RPC message. Raises :class:`ParseError` if it isn't valid."""
+def parse(raw: bytes, *, strict: bool = True) -> Message:
+    """Parse one JSON-RPC message. Raises :class:`ParseError` if it isn't valid.
+
+    ``strict=False`` turns off the duplicate-key and NaN/Infinity checks, so
+    the attack simulator can show what they protect against. Never in production.
+    """
     if len(raw) > MAX_MESSAGE_BYTES:
         raise ParseError(INVALID_REQUEST, f"message larger than {MAX_MESSAGE_BYTES} bytes")
     try:
         text = raw.decode("utf-8")
-        body = json.loads(text, object_pairs_hook=_reject_duplicates, parse_constant=_reject_constant)
+        if strict:
+            body = json.loads(text, object_pairs_hook=_reject_duplicates, parse_constant=_reject_constant)
+        else:
+            body = json.loads(text)
     except ParseError:
         raise
     except (UnicodeDecodeError, ValueError, RecursionError) as e:

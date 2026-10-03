@@ -66,6 +66,8 @@ def main() -> None:
         description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
     )
     Transport.add_arguments(parser)
+    # Accepted so every demo server takes the same flags; an honest server never exfiltrates anything.
+    parser.add_argument("--exfil-log", help=argparse.SUPPRESS)
     serve(build_server(), Transport.from_args(parser.parse_args()))
 
 

@@ -38,6 +38,7 @@ from ledgerline.jsonrpc import (
     error_response,
     parse,
 )
+from ledgerline.proxy.events import CONTROL_PARSING, NO_EVENTS, ProxyEvents
 from ledgerline.proxy.interceptor import Block, Interceptor, Replace, UpstreamError
 
 log = logging.getLogger("ledgerline.proxy")
@@ -70,9 +71,12 @@ class _StdioUpstream:
     and their replies are consumed here, never forwarded to the client.
     """
 
-    def __init__(self, send_to_server: SendBytes, chain: Interceptor, timeout: float) -> None:
+    def __init__(
+        self, send_to_server: SendBytes, chain: Interceptor, timeout: float, events: ProxyEvents
+    ) -> None:
         self._send = send_to_server
         self._chain = chain
+        self._events = events
         self._timeout = timeout
         self._prefix = f"ledgerline-{secrets.token_hex(4)}-"
         self._counter = itertools.count(1)
@@ -83,8 +87,11 @@ class _StdioUpstream:
         waiter = self.pending[request_id] = _Waiter()
         body: JSON = {"jsonrpc": "2.0", "id": request_id, "method": method, "params": params}
         try:
-            self._chain.observe("proxy→server", parse(encode(body).rstrip(b"\n")))
-            await self._send(encode(body))
+            data = encode(body)
+            message = parse(data.rstrip(b"\n"))
+            self._chain.observe("proxy→server", message)
+            self._events.message("proxy→server", message, data, internal=True)
+            await self._send(data)
             with anyio.fail_after(self._timeout):
                 await waiter.done.wait()
         except TimeoutError:
@@ -110,18 +117,28 @@ class _StdioUpstream:
 
 class StdioProxy:
     def __init__(
-        self, command: list[str], chain: Interceptor, *, upstream_timeout: float = UPSTREAM_TIMEOUT_SECONDS
+        self,
+        command: list[str],
+        chain: Interceptor,
+        *,
+        upstream_timeout: float = UPSTREAM_TIMEOUT_SECONDS,
+        events: ProxyEvents = NO_EVENTS,
+        strict_parsing: bool = True,
+        env: dict[str, str] | None = None,
     ):
         if not command:
             raise ValueError("no server command given")
         self.command = command
         self.chain = chain
         self.upstream_timeout = upstream_timeout
+        self.events = events
+        self.strict_parsing = strict_parsing
+        self.env = env
 
     async def run(self, client_lines: AsyncIterator[Line], send_to_client: SendBytes) -> int:
         """Relay until either side hangs up. Returns the server's exit code."""
         process = await anyio.open_process(
-            self.command, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=None
+            self.command, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=None, env=self.env
         )
         if process.stdin is None or process.stdout is None:
             raise RuntimeError("server process has no stdin/stdout pipes")
@@ -137,36 +154,46 @@ class StdioProxy:
             async with to_server_lock:
                 await server_in.send(data)
 
-        upstream = _StdioUpstream(to_server, self.chain, self.upstream_timeout)
+        events = self.events
+        upstream = _StdioUpstream(to_server, self.chain, self.upstream_timeout, events)
         # Client requests forwarded to the server and not yet answered, by id.
         pending: dict[Id, Message] = {}
 
         async def client_to_server() -> None:
             async for line in client_lines:
                 if isinstance(line, OversizedLine):
+                    events.message("client→proxy", None, b"")
+                    events.decision("rejected", CONTROL_PARSING, "message too large", None)
                     await self._reply(to_client, error_response(None, INVALID_REQUEST, "message too large"))
                     continue
                 try:
-                    message = parse(line.rstrip(b"\r\n"))
+                    message = parse(line.rstrip(b"\r\n"), strict=self.strict_parsing)
                 except ParseError as e:
                     # Never forward something we couldn't read: the server might read it differently.
+                    events.message("client→proxy", None, line)
+                    events.decision("rejected", CONTROL_PARSING, str(e), None)
                     await self._reply(to_client, error_response(None, e.code, str(e)))
                     continue
 
+                events.message("client→proxy", message, line)
                 self.chain.observe("client→server", message)
                 if message.kind is not Kind.REQUEST:
+                    events.message("proxy→server", message, line)
                     await to_server(line)  # notifications, and answers to the server's own requests
                     continue
 
                 decision = await self.chain.on_request(message, upstream)
                 if isinstance(decision, Block):
+                    events.decision("blocked", decision.control, decision.reason, message)
                     await self._reply(to_client, decision.response)
                     continue
                 if isinstance(decision, Replace):
+                    events.decision("replaced", decision.control, decision.reason, message)
                     message = parse(encode(decision.body).rstrip(b"\n"))
                     line = encode(decision.body)
                 if message.id is not None:
                     pending[message.id] = message
+                events.message("proxy→server", message, line)
                 await to_server(line)
 
         async def server_to_client() -> None:
@@ -187,22 +214,30 @@ class StdioProxy:
 
                 if message.kind is Kind.RESPONSE and upstream.resolve(message):
                     self.chain.observe("server→proxy", message)
+                    events.message("server→proxy", message, line, internal=True)
                     continue
                 self.chain.observe("server→client", message)
+                events.message("server→proxy", message, line)
 
                 request = (
                     pending.pop(message.id, None)
                     if message.kind is Kind.RESPONSE and message.id is not None
                     else None
                 )
+                outgoing = message
                 if request is not None:
                     decision = await self.chain.on_response(request, message)
                     if isinstance(decision, Replace):
+                        events.decision("replaced", decision.control, decision.reason, message)
                         line = encode(decision.body)
-                        self.chain.observe("proxy→client", parse(line.rstrip(b"\n")))
+                        outgoing = parse(line.rstrip(b"\n"))
+                        self.chain.observe("proxy→client", outgoing)
                     elif isinstance(decision, Block):
+                        events.decision("blocked", decision.control, decision.reason, message)
                         line = encode(decision.response)
-                        self.chain.observe("proxy→client", parse(line.rstrip(b"\n")))
+                        outgoing = parse(line.rstrip(b"\n"))
+                        self.chain.observe("proxy→client", outgoing)
+                events.message("proxy→client", outgoing, line)
                 await to_client(line)
 
         try:
@@ -229,7 +264,9 @@ class StdioProxy:
 
     async def _reply(self, to_client: SendBytes, body: JSON) -> None:
         data = encode(body)
-        self.chain.observe("proxy→client", parse(data.rstrip(b"\n")))
+        message = parse(data.rstrip(b"\n"))
+        self.chain.observe("proxy→client", message)
+        self.events.message("proxy→client", message, data)
         await to_client(data)
 
 

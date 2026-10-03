@@ -23,10 +23,12 @@ import httpx
 from mcp.shared.inbound import NAME_BEARING_METHODS, decode_header_value
 from mcp_types.jsonrpc import HEADER_MISMATCH
 from starlette.applications import Starlette
+from starlette.middleware import Middleware
 from starlette.requests import Request
 from starlette.responses import JSONResponse, Response, StreamingResponse
 from starlette.routing import Route
 
+from ledgerline.api.security import LocalGuard, LocalGuardMiddleware
 from ledgerline.jsonrpc import (
     JSON,
     MAX_MESSAGE_BYTES,
@@ -272,7 +274,8 @@ class HttpProxy:
         return Response(data, status_code=status, media_type="application/json")
 
 
-def build_app(upstream_url: str, chain: Interceptor) -> Starlette:
+def build_app(upstream_url: str, chain: Interceptor, guard: LocalGuard | None = None) -> Starlette:
+    """The proxy app. ``guard`` adds Host/Origin checks (DNS-rebinding protection)."""
     proxy = HttpProxy(upstream_url, chain)
 
     @asynccontextmanager
@@ -282,6 +285,9 @@ def build_app(upstream_url: str, chain: Interceptor) -> Starlette:
             yield
             proxy.client = None
 
+    middleware = [Middleware(LocalGuardMiddleware, guard=guard)] if guard else []
     return Starlette(
-        routes=[Route("/mcp", proxy.handle, methods=["GET", "POST", "DELETE"])], lifespan=lifespan
+        routes=[Route("/mcp", proxy.handle, methods=["GET", "POST", "DELETE"])],
+        lifespan=lifespan,
+        middleware=middleware,
     )

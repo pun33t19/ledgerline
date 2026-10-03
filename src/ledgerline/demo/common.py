@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import logging
+import os
 import sys
 from dataclasses import dataclass
 from pathlib import Path
@@ -19,9 +20,14 @@ log = logging.getLogger("ledgerline.demo")
 FAKE_SECRETS_DISPLAY_PATH = "~/.ledgerline-demo/fake-secrets.txt"
 
 
+# Lets the attack simulator point servers at its own temporary bait file.
+SECRETS_ENV = "LEDGERLINE_DEMO_SECRETS"
+
+
 def fake_secrets_path() -> Path:
-    """The bait file on disk. It only ever holds fake values written by demos/phase1.sh."""
-    return Path(FAKE_SECRETS_DISPLAY_PATH).expanduser()
+    """The bait file on disk. It only ever holds fake values written by the demos or the simulator."""
+    override = os.environ.get(SECRETS_ENV)
+    return Path(override) if override else Path(FAKE_SECRETS_DISPLAY_PATH).expanduser()
 
 
 @dataclass

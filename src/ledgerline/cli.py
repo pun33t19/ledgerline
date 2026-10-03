@@ -4,6 +4,7 @@
     ledgerline pin [--lock FILE] [--yes] --http URL
     ledgerline proxy stdio [options] -- <server command>         run in front of a local server
     ledgerline proxy http --upstream URL [--listen HOST:PORT] [options]
+    ledgerline ui [--port PORT] [--no-browser]                    open the Attack Simulation Lab
 
 Proxy options: --lock FILE, --tofu, --no-verify-each-call, --log FILE.
 """
@@ -48,6 +49,13 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--version", action="version", version=f"ledgerline {__version__}")
     commands = parser.add_subparsers(dest="command", required=True)
 
+    ui = commands.add_parser("ui", help="open the Attack Simulation Lab in your browser")
+    ui.add_argument("--port", type=int, default=8765, help="default: %(default)s")
+    ui.add_argument("--no-browser", action="store_true", help="print the link but don't open a browser")
+    ui.add_argument(
+        "--dev", action="store_true", help="also accept the Vite dev server (http://127.0.0.1:5173)"
+    )
+
     pin = commands.add_parser("pin", help="review a server's tools and pin their definitions")
     pin.add_argument("--lock", type=Path, default=DEFAULT_LOCKFILE, help="lock file (default: %(default)s)")
     pin.add_argument("--http", metavar="URL", help="pin a Streamable HTTP server instead of a command")
@@ -61,6 +69,13 @@ def build_parser() -> argparse.ArgumentParser:
         "--upstream", required=True, metavar="URL", help="the real server, e.g. http://127.0.0.1:8081/mcp"
     )
     http.add_argument("--listen", default="127.0.0.1:9000", metavar="HOST:PORT", help="default: %(default)s")
+    http.add_argument(
+        "--allow-host",
+        action="append",
+        default=[],
+        metavar="HOST:PORT",
+        help="extra Host header value to accept (needed when listening on a non-loopback address)",
+    )
     for p in (stdio, http):
         p.add_argument("--lock", type=Path, default=DEFAULT_LOCKFILE, help="lock file (default: %(default)s)")
         p.add_argument(
@@ -141,14 +156,44 @@ def run_proxy_stdio(args: argparse.Namespace, command: list[str]) -> int:
 def run_proxy_http(args: argparse.Namespace) -> int:
     import uvicorn
 
+    from ledgerline.api.security import LocalGuard, is_loopback, loopback_hosts
     from ledgerline.demo.common import parse_host_port
     from ledgerline.proxy.http import build_app
 
     host, port = parse_host_port(args.listen)
+    allowed = set(args.allow_host) | (loopback_hosts(port) if is_loopback(host) else set())
+    if not allowed:
+        log.warning("listening on %s without --allow-host: Host header checks are off", host)
+    # MCP clients aren't browsers, so any Origin header means a web page is trying to reach the proxy.
+    guard = LocalGuard(allowed_hosts=allowed, allowed_origins=set(), token=None, add_security_headers=False)
     with ExitStack() as files:
-        app = build_app(args.upstream, build_chain(args, files))
+        app = build_app(args.upstream, build_chain(args, files), guard)
         log.info("proxying http://%s:%d/mcp → %s", host, port, args.upstream)
         uvicorn.run(app, host=host, port=port, log_level="warning", access_log=False)
+    return 0
+
+
+def run_ui(args: argparse.Namespace) -> int:
+    import secrets
+    import webbrowser
+
+    import uvicorn
+
+    from ledgerline.api.app import create_app
+    from ledgerline.api.security import LocalGuard, loopback_hosts, loopback_origins
+
+    token = secrets.token_urlsafe(24)
+    origins = loopback_origins(args.port)
+    if args.dev:
+        origins |= loopback_origins(5173)
+    guard = LocalGuard(allowed_hosts=loopback_hosts(args.port), allowed_origins=origins, token=token)
+    url = f"http://127.0.0.1:{args.port}/?token={token}"
+    print(f"\n  Ledgerline Lab: {url}\n", file=sys.stderr)
+    if args.dev:
+        print(f"  Dev UI:         http://127.0.0.1:5173/?token={token}\n", file=sys.stderr)
+    if not args.no_browser:
+        webbrowser.open(url)
+    uvicorn.run(create_app(guard), host="127.0.0.1", port=args.port, log_level="warning", access_log=False)
     return 0
 
 
@@ -162,6 +207,8 @@ def main(argv: list[str] | None = None) -> int:
     try:
         if args.command == "pin":
             return run_pin(args, command)
+        if args.command == "ui":
+            return run_ui(args)
         if args.mode == "stdio":
             if not command:
                 raise ValueError(

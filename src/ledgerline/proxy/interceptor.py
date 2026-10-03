@@ -34,6 +34,8 @@ class Replace:
     """Pass this modified message on instead of the original."""
 
     body: JSON
+    reason: str = ""
+    control: str = ""  # which control made the change (see proxy/events.py)
 
 
 @dataclass(frozen=True)
@@ -42,6 +44,7 @@ class Block:
 
     response: JSON
     reason: str
+    control: str = ""  # which control made the decision (see proxy/events.py)
 
 
 Decision = Forward | Replace | Block

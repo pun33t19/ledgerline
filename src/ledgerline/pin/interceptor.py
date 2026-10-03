@@ -29,6 +29,7 @@ from typing import Any
 from ledgerline.jsonrpc import INVALID_PARAMS, JSON, Message, envelope, error_response, tool_error_result
 from ledgerline.pin.canonical import NotCanonicalizable, sha256_hex
 from ledgerline.pin.lockfile import Lockfile, PinnedTool
+from ledgerline.proxy.events import CONTROL_PINNING, CONTROL_VERIFY
 from ledgerline.proxy.interceptor import (
     FORWARD,
     Block,
@@ -79,7 +80,10 @@ class PinInterceptor(Interceptor):
             return FORWARD  # nothing removed: forward the original bytes
         body = copy.deepcopy(response.body)
         body["result"]["tools"] = kept
-        return Replace(body)
+        hidden = sorted(
+            {str(t.get("name")) for t in tools if isinstance(t, dict)} - {str(t.get("name")) for t in kept}
+        )
+        return Replace(body, f"hid changed or unpinned tool(s): {', '.join(hidden)}", CONTROL_PINNING)
 
     def _check_listed(self, tool: Any) -> bool:
         """True if this listed tool may be shown to the client."""
@@ -187,7 +191,9 @@ class PinInterceptor(Interceptor):
     def _block(self, request: Message, name: str, event: str, why: str) -> Block:
         self._alert(f"call_blocked:{event}", name)
         text = f"Blocked by Ledgerline: tool {name!r} was not called because {why}."
-        return Block(tool_error_result(request, text), event)
+        # Which control caught it: the live check before the call, or the pin alone.
+        control = CONTROL_VERIFY if self.verify_each_call else CONTROL_PINNING
+        return Block(tool_error_result(request, text), event, control)
 
     def _alert(self, event: str, tool: str | None, **details: Any) -> None:
         payload: JSON = {"event": event, "tool": tool, **details}
