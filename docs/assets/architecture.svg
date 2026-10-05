@@ -1,0 +1,85 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 470" role="img" aria-labelledby="t d" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif">
+  <title id="t">Ledgerline architecture</title>
+  <desc id="d">An AI host sends MCP tool calls through Ledgerline, which parses them strictly, runs them through an interceptor chain (tool pinning and per-call verification today; ledger, policy, taint and approval planned) and forwards them to the tool server. Ledgerline emits events to a FastAPI backend that streams them over WebSocket to the React Attack Simulation Lab.</desc>
+  <style>
+    .bg{fill:#F1F4EC}.box{fill:#FFFFFF;stroke:#C9D8C2;stroke-width:1.5}
+    .core{fill:#FFFFFF;stroke:#24418A;stroke-width:2}.plan{fill:none;stroke:#8A9A86;stroke-width:1.5;stroke-dasharray:5 4}
+    .ink{fill:#1D2B3A}.mute{fill:#55655F}.guard{fill:#24418A}.safe{fill:#2F6B4F}.loss{fill:#B42318}
+    .line{stroke:#1D2B3A;stroke-width:1.6;fill:none}.ev{stroke:#24418A;stroke-width:1.4;fill:none;stroke-dasharray:4 3}
+    .chip{fill:#E4ECF9;stroke:#24418A;stroke-width:1}.chipp{fill:none;stroke:#8A9A86;stroke-width:1;stroke-dasharray:4 3}
+    @media (prefers-color-scheme: dark){
+      .bg{fill:#0F1720}.box{fill:#16212C;stroke:#2E4038}.core{fill:#16212C;stroke:#8FA8E8}
+      .ink{fill:#E6ECE3}.mute{fill:#9AA9A2}.guard{fill:#8FA8E8}.safe{fill:#7CC4A0}.loss{fill:#F2827A}
+      .line{stroke:#C9D3CC}.ev{stroke:#8FA8E8}.chip{fill:#1C2A45;stroke:#8FA8E8}.plan,.chipp{stroke:#5F6E68}
+    }
+  </style>
+  <defs>
+    <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" class="ink"/></marker>
+    <marker id="b" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" class="guard"/></marker>
+  </defs>
+  <rect class="bg" width="960" height="470" rx="14"/>
+
+  <!-- host -->
+  <rect class="box" x="30" y="80" width="170" height="110" rx="10"/>
+  <text class="ink" x="115" y="118" text-anchor="middle" font-size="17" font-weight="700">AI host</text>
+  <text class="mute" x="115" y="142" text-anchor="middle" font-size="12.5">Claude Desktop, Cursor,</text>
+  <text class="mute" x="115" y="159" text-anchor="middle" font-size="12.5">any MCP client</text>
+
+  <!-- ledgerline -->
+  <rect class="core" x="250" y="40" width="460" height="200" rx="12"/>
+  <text class="guard" x="270" y="68" font-size="17" font-weight="700">Ledgerline proxy</text>
+  <text class="mute" x="690" y="68" text-anchor="end" font-size="12">stdio · Streamable HTTP + SSE</text>
+  <rect class="box" x="270" y="86" width="420" height="36" rx="7"/>
+  <text class="ink" x="285" y="109" font-size="13" font-weight="600">Strict JSON-RPC parser</text>
+  <text class="mute" x="675" y="109" text-anchor="end" font-size="12">duplicate keys · NaN · batches · 16 MiB</text>
+  <text class="mute" x="270" y="146" font-size="12">Interceptor chain (Forward · Replace · Block), fail closed</text>
+  <rect class="chip" x="270" y="156" width="98" height="30" rx="6"/><text class="guard" x="319" y="176" text-anchor="middle" font-size="12" font-weight="600">tool pinning</text>
+  <rect class="chip" x="374" y="156" width="116" height="30" rx="6"/><text class="guard" x="432" y="176" text-anchor="middle" font-size="12" font-weight="600">verify every call</text>
+  <rect class="chipp" x="496" y="156" width="60" height="30" rx="6"/><text class="mute" x="526" y="176" text-anchor="middle" font-size="12">ledger</text>
+  <rect class="chipp" x="562" y="156" width="60" height="30" rx="6"/><text class="mute" x="592" y="176" text-anchor="middle" font-size="12">policy</text>
+  <rect class="chipp" x="628" y="156" width="62" height="30" rx="6"/><text class="mute" x="659" y="176" text-anchor="middle" font-size="12">approval</text>
+  <text class="mute" x="270" y="220" font-size="11.5">solid = built (v0.0.4) · dashed = roadmap (Phases 4–6)</text>
+
+  <!-- server -->
+  <rect class="box" x="760" y="80" width="170" height="110" rx="10"/>
+  <text class="ink" x="845" y="118" text-anchor="middle" font-size="17" font-weight="700">MCP tool server</text>
+  <text class="mute" x="845" y="142" text-anchor="middle" font-size="12.5">weather, database,</text>
+  <text class="mute" x="845" y="159" text-anchor="middle" font-size="12.5">email, GitHub …</text>
+
+  <path class="line" d="M200 125H248" marker-end="url(#a)"/>
+  <path class="line" d="M712 125H758" marker-end="url(#a)"/>
+  <path class="line" d="M758 150H712" marker-end="url(#a)"/>
+  <path class="line" d="M248 150H200" marker-end="url(#a)"/>
+  <text class="mute" x="224" y="117" text-anchor="middle" font-size="10.5">call</text>
+  <text class="mute" x="735" y="117" text-anchor="middle" font-size="10.5">allowed</text>
+
+  <!-- lock file -->
+  <rect class="box" x="760" y="250" width="170" height="60" rx="10"/>
+  <text class="ink" x="845" y="275" text-anchor="middle" font-size="14" font-weight="600">ledgerline.lock</text>
+  <text class="mute" x="845" y="294" text-anchor="middle" font-size="11.5">RFC 8785 + SHA-256 pins</text>
+  <path class="line" d="M760 280C735 280 712 250 712 222" marker-end="url(#a)"/>
+
+  <!-- events to UI -->
+  <path class="ev" d="M480 242V300" marker-end="url(#b)"/>
+  <text class="guard" x="490" y="276" font-size="11.5">ProxyEvents: hops · decisions · alerts</text>
+
+  <rect class="box" x="250" y="302" width="460" height="140" rx="12"/>
+  <text class="ink" x="270" y="330" font-size="16" font-weight="700">Attack Simulation Lab</text>
+  <rect class="box" x="270" y="344" width="200" height="82" rx="8"/>
+  <text class="ink" x="285" y="368" font-size="13" font-weight="600">FastAPI + WebSocket</text>
+  <text class="mute" x="285" y="387" font-size="11.5">scenario runner, two lanes</text>
+  <text class="mute" x="285" y="403" font-size="11.5">Host/Origin guard, token</text>
+  <text class="mute" x="285" y="419" font-size="11.5">→ cookie, CSP</text>
+  <rect class="box" x="490" y="344" width="200" height="82" rx="8"/>
+  <text class="ink" x="505" y="368" font-size="13" font-weight="600">React 19 + TypeScript</text>
+  <text class="mute" x="505" y="387" font-size="11.5">side-by-side runs, inspector,</text>
+  <text class="mute" x="505" y="403" font-size="11.5">control toggles, measured</text>
+  <text class="mute" x="505" y="419" font-size="11.5">coverage heatmap</text>
+  <path class="ev" d="M470 385H488" marker-end="url(#b)"/>
+
+  <text class="mute" x="30" y="330" font-size="12" font-weight="600">Two lanes per run</text>
+  <text class="loss" x="30" y="352" font-size="12">● unprotected: agent → server</text>
+  <text class="safe" x="30" y="372" font-size="12">● protected: agent → proxy → server</text>
+  <text class="mute" x="30" y="394" font-size="11.5">scripted "hijacked" agent,</text>
+  <text class="mute" x="30" y="410" font-size="11.5">fake secret in a sandbox</text>
+</svg>

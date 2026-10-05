@@ -833,6 +833,21 @@ FILES: dict[str, tuple[str, str]] = {
     ".python-version": ("1", "Tells uv to use Python 3.14 (like a toolchain version in Maven)."),
     "CHANGELOG.md": ("0", "What changed in each version, phase by phase."),
     "CLAUDE.md": ("3", "Orientation for AI coding assistants: commands, architecture, invariants."),
+    "docs/assets/architecture.svg": (
+        "3",
+        "README diagram: host → proxy (interceptor chain) → server, and the Lab.",
+    ),
+    "docs/assets/request-lifecycle.svg": (
+        "3",
+        "README diagram: the checks one tools/call passes before it is forwarded.",
+    ),
+    "docs/assets/lab-catalog.png": ("3", "README screenshot: the Lab's attack catalogue."),
+    "docs/assets/lab-coverage.png": ("3", "README screenshot: the measured coverage matrix."),
+    "docs/assets/lab-run-light.png": (
+        "3",
+        "README screenshot: a silent rug pull side by side (light theme).",
+    ),
+    "docs/assets/lab-run-dark.png": ("3", "README screenshot: the same run in the dark theme."),
     "LICENSE": ("0", "Apache-2.0 open-source licence."),
     "Makefile": ("0", "Short commands: `make install`, `make ci`, `make test`, `make guide`…"),
     "README.md": ("0", "Front page: what Ledgerline is and how to run it."),
