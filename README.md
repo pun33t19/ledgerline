@@ -2,9 +2,9 @@
 
 # Ledgerline
 
-**An open-source authorization and evidence layer for AI-agent tool calls.**
+**An open-source security layer for AI-agent tool calls.**
 
-Ledgerline sits between an AI agent and the tools it uses (MCP servers). It checks every call before it runs, blocks tools that changed behind your back, and, as the roadmap lands, records every call, decision and human approval in a tamper-evident log that anyone can verify offline.
+Ledgerline sits between an AI agent and the tools it uses (MCP servers). It checks every call before it runs, blocks tools that changed behind your back, and refuses ambiguous protocol messages. A built-in Attack Simulation Lab shows every attack with and without Ledgerline, side by side.
 
 [![CI](https://github.com/pun33t19/ledgerline/actions/workflows/ci.yml/badge.svg)](https://github.com/pun33t19/ledgerline/actions/workflows/ci.yml)
 ![Python 3.12+](https://img.shields.io/badge/python-3.12%2B-24418A)
@@ -20,7 +20,7 @@ Ledgerline sits between an AI agent and the tools it uses (MCP servers). It chec
 
 </div>
 
-> **Status: v0.0.4, pre-alpha.** Phases 0–3 of a 15-phase roadmap are complete: the proxy, tool pinning, strict protocol parsing and the Attack Simulation Lab. The tamper-evident ledger, policy engine and human approval are next. Everything below marks what is **built** and what is **planned**.
+> **Status: v0.0.4, pre-alpha.** Not ready for production use.
 
 ---
 
@@ -38,18 +38,14 @@ Guardrail models that classify prompts are probabilistic and can be fooled like 
 
 ## What Ledgerline does
 
-| | Capability | Status |
-|---|---|---|
-| 🔌 | **Transparent MCP proxy** for stdio and Streamable HTTP (incl. SSE), for both MCP 2026-07-28 (stateless) and 2025-11-25. Normal traffic is forwarded **byte for byte**. | ✅ Built |
-| 📌 | **Tool-definition pinning:** each tool's full definition is fingerprinted (RFC 8785 canonical JSON + SHA-256) after human review. Changed or unreviewed tools are hidden from the model and their calls blocked. | ✅ Built |
-| 🔁 | **Verify before every call:** re-fetches the tool's live definition before forwarding each call, which catches rug pulls even when the host never re-reads the tool list. | ✅ Built |
-| 🧱 | **Strict protocol parsing:** rejects duplicate keys, `NaN`/`Infinity`, batches, oversized messages, and `Mcp-Method`/`Mcp-Name` headers that disagree with the body. Fails closed. | ✅ Built |
-| 🧪 | **Attack Simulation Lab (UI):** runs real attacks with and without Ledgerline side by side, lets you toggle each control, and measures which control stops which attack. | ✅ Built |
-| 🛡️ | **Local-surface hardening:** the UI and HTTP proxy reject DNS-rebinding (`Host`/`Origin` checks), require a startup token (exchanged for an HttpOnly cookie) and send a strict CSP. | ✅ Built |
-| 📒 | **Tamper-evident ledger:** a hash-chained Postgres log written *before* each call is forwarded, plus `ledgerline verify`. | 🔜 Phase 4 |
-| ⚖️ | **Policy engine:** Cedar rules on tool *arguments*, session taint after untrusted content, decision provenance (which rule, which policy version). | 🔜 Phase 5 |
-| 🙋 | **Durable human approval:** risky calls pause for a person (Temporal workflows; a timeout means deny). | 🔜 Phase 6 |
-| 🌳 | **Merkle transparency log** with signed, witnessed checkpoints and offline proofs; **A2A delegation lineage**; benchmarks with AgentDojo/MCPTox. | 🗺️ Phases 9–11 |
+| | Capability |
+|---|---|
+| 🔌 | **Transparent MCP proxy** for stdio and Streamable HTTP (incl. SSE), for both MCP 2026-07-28 (stateless) and 2025-11-25. Normal traffic is forwarded **byte for byte**. |
+| 📌 | **Tool-definition pinning:** each tool's full definition is fingerprinted (RFC 8785 canonical JSON + SHA-256) after human review. Changed or unreviewed tools are hidden from the model and their calls blocked. |
+| 🔁 | **Verify before every call:** re-fetches the tool's live definition before forwarding each call, which catches rug pulls even when the host never re-reads the tool list. |
+| 🧱 | **Strict protocol parsing:** rejects duplicate keys, `NaN`/`Infinity`, batches, oversized messages, and `Mcp-Method`/`Mcp-Name` headers that disagree with the body. Fails closed. |
+| 🧪 | **Attack Simulation Lab (UI):** runs real attacks with and without Ledgerline side by side, lets you toggle each control, and measures which control stops which attack. |
+| 🛡️ | **Local-surface hardening:** the UI and HTTP proxy reject DNS-rebinding (`Host`/`Origin` checks), require a startup token (exchanged for an HttpOnly cookie) and send a strict CSP. |
 
 ## See it: the Attack Simulation Lab
 
@@ -80,9 +76,9 @@ The agent is a deterministic stand-in for a hijacked model: it always obeys hidd
 | Silent rug pull (host never re-reads) | 🔴 Secret stolen | 🟢 Safe | Pinning + verify before every call |
 | New unreviewed tool appears mid-session | 🔴 Secret stolen | 🟢 Safe | Tool pinning |
 | Parser differential (duplicate JSON keys) | 🔴 Secret stolen | 🟢 Safe | Strict parsing |
-| Tool poisoning present from day one | 🔴 Secret stolen | 🔴 **Not stopped yet** | Argument policy (Phase 5) and approval (Phase 6) |
+| Tool poisoning present from day one | 🔴 Secret stolen | 🔴 **Not stopped yet** | None of the current controls |
 
-> **Honest limit.** Pinning detects *change*, not *malice*. If a tool was poisoned when you approved it, pinning approves the poison. The Lab says so on screen, and Phases 5–6 close the gap. Every row above is also an automated regression test.
+> **Honest limit.** Pinning detects *change*, not *malice*. If a tool was poisoned when you approved it, pinning approves the poison. The Lab says so on screen. Every row above is also an automated regression test.
 
 <details>
 <summary>Dark theme</summary>
@@ -126,12 +122,12 @@ In an MCP host config such as Claude Desktop's, wrap the server's command with `
 
 ## How it works
 
-<p align="center"><img src="docs/assets/architecture.svg" alt="Architecture: AI host → Ledgerline proxy (strict parser, interceptor chain with tool pinning and per-call verification; ledger, policy and approval planned) → MCP tool server. The proxy emits events to a FastAPI + WebSocket backend that drives the React Lab." width="900"></p>
+<p align="center"><img src="docs/assets/architecture.svg" alt="Architecture: AI host → Ledgerline proxy (strict parser, interceptor chain with tool pinning and per-call verification) → MCP tool server. The proxy emits events to a FastAPI + WebSocket backend that drives the React Lab." width="900"></p>
 
 - **One interceptor chain, two transports.**
   - Both the stdio relay and the HTTP reverse proxy feed every message through the same `Chain` of interceptors.
   - Each interceptor answers `Forward`, `Replace` or `Block`. Requests run through the chain in order and responses in reverse.
-  - Each later phase adds one interceptor (ledger, taint, policy, approval) without touching the transports.
+  - New checks plug in as another interceptor without touching the transports.
 - **Interceptors can ask the server questions.** The pin interceptor makes its own `tools/list` request before forwarding a call. It uses random-prefixed request IDs so they never collide with the client's.
 - **Pins hold full definitions, not just hashes**, so a change can be shown to a human as a diff. Lock files are re-verified on load and saved atomically.
 - **Observability without coupling.** The proxy emits typed events (message hops, decisions, alerts) through hooks. The Lab runner turns them into a WebSocket stream that the React UI folds into state with a pure reducer.
@@ -192,7 +188,6 @@ make e2e               # Playwright
 | **API** | FastAPI (REST + WebSocket), Uvicorn, Pydantic |
 | **UI** | React 19, TypeScript, Vite, Tailwind CSS 4, Radix UI, TanStack Query, React Router |
 | **Tooling** | uv, ruff, mypy, pytest, hypothesis, Biome, Vitest, Playwright, openapi-typescript, GitHub Actions |
-| **Planned** | Postgres + psycopg (ledger), Cedar (policy), Temporal (approvals), OpenTelemetry, a Go transparency-log service on Tessera |
 
 ## Project structure
 
@@ -206,18 +201,18 @@ src/ledgerline/
   demo/           demo MCP servers (honest, poisoned, rug pull) and a wire-level client
 web/              React + TypeScript Lab (pages, components, generated API types, Playwright e2e)
 tests/            pytest suite;  testdata/mcp/  recorded wire fixtures
-docs/             roadmap, ADRs, phase journals, prior-art review, UI research
+docs/             ADRs, phase journals, prior-art review, UI research
 ```
 
 ## How it relates to other tools
 
 Ledgerline is meant to **complement, not replace**, existing tools:
 
-- **Agent firewalls** like [Pipelock](https://github.com/luckyPipewrench/pipelock) are broader on network egress (DLP, injection scanning, containment). Ledgerline focuses on *authorizing* actions and keeping *verifiable evidence* of them.
-- **MCP gateways** handle routing and auth. Ledgerline is designed to plug into them as an authorization sidecar (Phase 12).
+- **Agent firewalls** like [Pipelock](https://github.com/luckyPipewrench/pipelock) are broader on network egress (DLP, injection scanning, containment). Ledgerline focuses on the tool supply chain and the protocol: whether a tool is still the one you approved, and whether a message means the same thing to every parser.
+- **MCP gateways** handle routing and auth. Ledgerline works alongside them as a checking proxy.
 - **Guardrail models** are a useful signal, but they're probabilistic. Ledgerline's checks are deterministic and testable in CI.
 
-Hash chains and signed logs are not new. The aim is the *combination*: analysable argument-level policy with full decision provenance, durable human approval, a witnessed Merkle log with offline proofs, delegation lineage across MCP and A2A, and a fully open UI. See [`docs/prior-art.md`](docs/prior-art.md) for the detailed review.
+Ledgerline's distinguishing pieces are whole-definition pinning verified before every call, strict parsing against parser differentials, and an open, side-by-side attack lab with measured coverage. See [`docs/prior-art.md`](docs/prior-art.md) for the detailed review.
 
 ## Safety note
 

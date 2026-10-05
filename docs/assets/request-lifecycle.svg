@@ -57,8 +57,4 @@
   <text class="loss" x="50" y="233" font-size="13.5" font-weight="700">Blocked: JSON-RPC error back to the host; the server never sees the call</text>
   <text class="mute" x="50" y="254" font-size="11.5">Each block names its control: strict-parsing · tool-pinning · verify-before-call.</text>
   <text class="mute" x="50" y="271" font-size="11.5">If a check itself can't run, the call is blocked (fail closed).</text>
-  <text class="mute" x="650" y="190" font-size="11.5">Phase 4 adds a ledger entry written</text>
-  <text class="mute" x="650" y="206" font-size="11.5">before step 4 (write-before-forward);</text>
-  <text class="mute" x="650" y="222" font-size="11.5">Phases 5–6 add policy and approval</text>
-  <text class="mute" x="650" y="238" font-size="11.5">between steps 3 and 4.</text>
 </svg>
