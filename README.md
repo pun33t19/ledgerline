@@ -12,7 +12,7 @@ Ledgerline sits between an AI agent and the tools it uses (MCP servers). It chec
 ![mypy strict](https://img.shields.io/badge/mypy-strict-2F6B4F)
 ![License](https://img.shields.io/badge/license-Apache--2.0-2F6B4F)
 
-[The problem](#the-problem) · [See it](#see-it-the-attack-simulation-lab) · [Quick start](#quick-start) · [How it works](#how-it-works) · [Engineering notes](#engineering-highlights) · [Testing](#testing-and-quality) · [Roadmap](#roadmap)
+[The problem](#the-problem) · [See it](#see-it-the-attack-simulation-lab) · [Quick start](#quick-start) · [How it works](#how-it-works) · [Engineering notes](#engineering-highlights) · [Testing](#testing-and-quality)
 
 <img src="docs/assets/lab-run-light.png" alt="Ledgerline Lab: the silent rug pull attack runs twice. Without Ledgerline the attacker gets the secret; with Ledgerline the call is stopped by the check before every call." width="900">
 
@@ -208,28 +208,6 @@ web/              React + TypeScript Lab (pages, components, generated API types
 tests/            pytest suite;  testdata/mcp/  recorded wire fixtures
 docs/             roadmap, ADRs, phase journals, prior-art review, UI research
 ```
-
-## Roadmap
-
-| Phase | Theme | Status |
-|---|---|---|
-| 0 | Scope, prior-art review, CI | ✅ v0.0.0 |
-| 1 | MCP fundamentals, demo attack servers, wire fixtures | ✅ v0.0.2 |
-| 2 | Interceptor proxy + tool-definition pinning | ✅ v0.0.3 |
-| 3 | Attack Simulation Lab (React UI), DNS-rebinding fix | ✅ v0.0.4 |
-| 4 | Tamper-evident ledger (hash-chained Postgres, write-before-forward, `verify`, live tamper demo) | 🔜 next |
-| 5 | Policy engine (Cedar), taint tracking, decision provenance, policy studio | |
-| 6 | Durable human approval (Temporal), approval inbox | |
-| 7 | OpenTelemetry traces and live monitor | |
-| 8 | App shell, auth (OIDC), evidence reports | |
-| 9 | Merkle transparency log (Go/Tessera), witnessed checkpoints, offline and in-browser verification | |
-| 10 | A2A delegation lineage graph | |
-| 11 | Security evaluation (AgentDojo, MCPTox), live-model Lab mode | |
-| 12 | Performance, Envoy ext_authz gateway adapter | |
-| 13 | Public event-schema spec and conformance vectors | |
-| 14 | Open-source launch v0.1.0 (signed releases, SBOM, docs site) | |
-
-Full plan with reading lists and test strategy for each phase: [`docs/roadmap.md`](docs/roadmap.md).
 
 ## How it relates to other tools
 
