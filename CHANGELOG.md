@@ -4,6 +4,14 @@ All notable changes to this project are documented here. The format follows [Kee
 
 ## [Unreleased]
 
+### Changed
+- **Lab redesign.** A minimal, dark-first look (glass panels, Instrument Serif headlines, Geist text) with a light / dark / system theme switch.
+- **Attack replay: a 3D attack map.** Each side of a run plays back as a knowledge graph on a tilted floor (your agent, Ledgerline, the tool server, your secrets, the attacker). A packet travels each step, a plain-language caption explains it, and you can play, pause, scrub, drag to turn the map, or switch to a flat view. The steps are derived from the run's real events (`web/src/lib/story.ts`).
+- The landing page shows a looping attack map behind the headline and a one-click "Watch a silent rug pull".
+
+### Removed
+- The flow strip and attack-path components, replaced by the attack map.
+
 ## [v0.0.4] - 2026-10-03 — Phase 3: Attack Simulation Lab
 
 ### Added

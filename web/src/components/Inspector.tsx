@@ -39,12 +39,12 @@ export function Inspector({ entry, onClose }: Props) {
   return (
     <Dialog.Root open={entry !== null} onOpenChange={(open) => !open && onClose()}>
       <Dialog.Portal>
-        <Dialog.Overlay className="fixed inset-0 bg-ink/20" />
-        <Dialog.Content className="fixed inset-y-0 right-0 flex w-full max-w-xl flex-col gap-4 overflow-y-auto border-l border-rule bg-paper-raised p-6 shadow-xl">
+        <Dialog.Overlay className="fixed inset-0 bg-black/40 backdrop-blur-sm" />
+        <Dialog.Content className="fixed inset-y-0 right-0 flex w-full max-w-xl flex-col gap-4 overflow-y-auto border-l border-rule bg-paper p-6 shadow-2xl">
           {entry && (
             <>
               <div>
-                <Dialog.Title className="text-xl font-bold">{entryLabel(entry).who}</Dialog.Title>
+                <Dialog.Title className="text-xl font-medium">{entryLabel(entry).who}</Dialog.Title>
                 <Dialog.Description className="mt-1 break-words text-ink-muted">
                   {entryLabel(entry).what}
                 </Dialog.Description>
@@ -53,7 +53,7 @@ export function Inspector({ entry, onClose }: Props) {
                 <Explanation entry={entry} />
               </div>
               <JsonView value={entry.type === "message" ? entry.body : entry} />
-              <Dialog.Close className="self-start rounded border border-rule px-3 py-1.5 hover:border-rule-strong">
+              <Dialog.Close className="self-start rounded-full border border-rule-strong px-4 py-1.5 hover:bg-paper-raised">
                 Close
               </Dialog.Close>
             </>

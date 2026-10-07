@@ -66,7 +66,7 @@ export function ToolLens({ pinned, current, shownWithLedgerline }: Props) {
         const visible = shownWithLedgerline.some((t) => t.name === name);
         return (
           <section key={name} className="border-t border-rule pt-4" aria-labelledby={`tool-${name}`}>
-            <h3 id={`tool-${name}`} className="font-mono text-lg font-bold">
+            <h3 id={`tool-${name}`} className="font-mono text-lg font-medium">
               {name}
             </h3>
             <p className="mt-1 text-sm">
@@ -79,13 +79,13 @@ export function ToolLens({ pinned, current, shownWithLedgerline }: Props) {
             </p>
             <div className="mt-3 grid gap-6 md:grid-cols-2">
               <div>
-                <h4 className="mb-1 font-bold">What you see</h4>
+                <h4 className="mb-1 font-medium">What you see</h4>
                 <p className="rounded-sm border border-rule bg-paper-raised px-3 py-2">
                   {now.description.split("\n")[0]}
                 </p>
               </div>
               <div>
-                <h4 className="mb-1 font-bold">What the model reads</h4>
+                <h4 className="mb-1 font-medium">What the model reads</h4>
                 <div className="rounded-sm border border-rule bg-paper-raised px-3 py-2">
                   <ModelView text={now.description} />
                 </div>
@@ -93,7 +93,7 @@ export function ToolLens({ pinned, current, shownWithLedgerline }: Props) {
             </div>
             {changed && approved && (
               <div className="mt-4">
-                <h4 className="mb-1 font-bold">Approved version compared with what the server sends now</h4>
+                <h4 className="mb-1 font-medium">Approved version compared with what the server sends now</h4>
                 <div className="rounded-sm border border-rule bg-paper-raised px-3 py-2">
                   <Diff before={approved.description} after={now.description} />
                 </div>

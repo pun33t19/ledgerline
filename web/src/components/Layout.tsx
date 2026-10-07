@@ -1,36 +1,37 @@
-import { useState } from "react";
 import { NavLink, Outlet } from "react-router";
-import { currentTheme, setTheme, type Theme } from "../lib/theme";
+import { ThemeSwitch } from "./ThemeSwitch";
 
 function Wordmark() {
   return (
     <span className="flex items-center gap-2.5">
       <svg aria-hidden="true" viewBox="0 0 28 28" className="h-7 w-7">
-        <rect width="28" height="28" rx="5" className="fill-paper-raised stroke-rule-strong" />
-        <path d="M5 8h18M5 14h18M5 20h18" className="stroke-rule-strong" strokeWidth="1.4" />
-        <path d="M13 4v20M15.4 4v20" className="stroke-guard" strokeWidth="1.5" />
+        <rect width="28" height="28" rx="8" className="fill-button" />
+        <path
+          d="M7 9.5h14M7 14h14M7 18.5h14"
+          className="stroke-button-ink"
+          strokeOpacity="0.35"
+          strokeWidth="1.4"
+        />
+        <path d="M12.6 6v16M15.4 6v16" className="stroke-button-ink" strokeWidth="1.6" />
       </svg>
-      <span className="text-lg font-bold tracking-tight">Ledgerline</span>
-      <span className="text-ink-muted">Lab</span>
+      <span className="hidden text-[17px] font-semibold tracking-tight sm:inline">Ledgerline</span>
     </span>
   );
 }
 
 const linkClass = ({ isActive }: { isActive: boolean }) =>
-  `rounded px-2 py-1 ${isActive ? "text-guard underline decoration-2 underline-offset-[6px]" : "text-ink-muted hover:text-ink"}`;
+  `rounded-full px-3 py-1.5 text-sm transition-colors ${isActive ? "bg-paper-raised text-ink" : "text-ink-muted hover:text-ink"}`;
 
 export function Layout() {
-  const [theme, setThemeState] = useState<Theme>(currentTheme);
-  const next: Theme = theme === "dark" ? "light" : "dark";
-
   return (
-    <div className="min-h-screen">
-      <header className="border-b border-rule">
-        <div className="mx-auto flex max-w-7xl flex-wrap items-center gap-x-8 gap-y-2 px-5 py-3">
-          <NavLink to="/" aria-label="Ledgerline Lab home">
+    <div className="min-h-screen overflow-x-clip">
+      <div className="backdrop" aria-hidden="true" />
+      <header className="relative z-20 px-4 pt-4">
+        <div className="glass mx-auto flex max-w-6xl flex-wrap items-center gap-x-3 gap-y-2 rounded-2xl px-3 py-2.5 sm:gap-x-6 sm:px-4">
+          <NavLink to="/" aria-label="Ledgerline Lab home" className="rounded-lg">
             <Wordmark />
           </NavLink>
-          <nav aria-label="Main" className="flex gap-2">
+          <nav aria-label="Main" className="flex gap-1">
             <NavLink to="/" end className={linkClass}>
               Attacks
             </NavLink>
@@ -38,19 +39,12 @@ export function Layout() {
               Coverage
             </NavLink>
           </nav>
-          <button
-            type="button"
-            onClick={() => {
-              setTheme(next);
-              setThemeState(next);
-            }}
-            className="ml-auto rounded border border-rule px-2.5 py-1 text-sm text-ink-muted hover:border-rule-strong hover:text-ink"
-          >
-            {next === "dark" ? "Dark theme" : "Light theme"}
-          </button>
+          <div className="ml-auto">
+            <ThemeSwitch />
+          </div>
         </div>
       </header>
-      <main className="mx-auto max-w-7xl px-5 pt-8 pb-16">
+      <main className="mx-auto max-w-6xl px-5 pt-12 pb-20 md:px-8">
         <Outlet />
       </main>
     </div>

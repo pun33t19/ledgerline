@@ -4,7 +4,7 @@
 
 **An open-source security layer for AI-agent tool calls.**
 
-Ledgerline sits between an AI agent and the tools it uses (MCP servers). It checks every call before it runs, blocks tools that changed behind your back, and refuses ambiguous protocol messages. A built-in Attack Simulation Lab shows every attack with and without Ledgerline, side by side.
+Ledgerline sits between an AI agent and the tools it uses (MCP servers). It checks every call before it runs, blocks tools that changed behind your back, and refuses ambiguous protocol messages. A built-in Attack Simulation Lab replays every attack, with and without Ledgerline, as an animated 3D map of how your system gets compromised and where Ledgerline stops it.
 
 [![CI](https://github.com/pun33t19/ledgerline/actions/workflows/ci.yml/badge.svg)](https://github.com/pun33t19/ledgerline/actions/workflows/ci.yml)
 ![Python 3.12+](https://img.shields.io/badge/python-3.12%2B-24418A)
@@ -14,9 +14,9 @@ Ledgerline sits between an AI agent and the tools it uses (MCP servers). It chec
 
 [The problem](#the-problem) · [See it](#see-it-the-attack-simulation-lab) · [Quick start](#quick-start) · [How it works](#how-it-works) · [Engineering notes](#engineering-highlights) · [Testing](#testing-and-quality)
 
-<img src="docs/assets/lab-run-light.png" alt="Ledgerline Lab: the silent rug pull attack runs twice. Without Ledgerline the attacker gets the secret; with Ledgerline the call is stopped by the check before every call." width="900">
+<img src="docs/assets/lab-run-light.png" alt="Ledgerline Lab replaying a silent rug pull on a 3D attack map: with Ledgerline, the call to the changed tool is stopped at Ledgerline before the server sees it." width="900">
 
-<sub>The same attack, run twice at once. Left: straight to a malicious tool server, and the secret leaks. Right: through Ledgerline, where the call is blocked before the server runs it.</sub>
+<sub>The attack replay. Each step of the run travels across a 3D map of your agent, Ledgerline, the tool server, your secrets and the attacker, with a plain-language caption. Here, Ledgerline stops a call to a tool that changed since you approved it.</sub>
 
 </div>
 
@@ -44,7 +44,7 @@ Guardrail models that classify prompts are probabilistic and can be fooled like 
 | 📌 | **Tool-definition pinning:** each tool's full definition is fingerprinted (RFC 8785 canonical JSON + SHA-256) after human review. Changed or unreviewed tools are hidden from the model and their calls blocked. |
 | 🔁 | **Verify before every call:** re-fetches the tool's live definition before forwarding each call, which catches rug pulls even when the host never re-reads the tool list. |
 | 🧱 | **Strict protocol parsing:** rejects duplicate keys, `NaN`/`Infinity`, batches, oversized messages, and `Mcp-Method`/`Mcp-Name` headers that disagree with the body. Fails closed. |
-| 🧪 | **Attack Simulation Lab (UI):** runs real attacks with and without Ledgerline side by side, lets you toggle each control, and measures which control stops which attack. |
+| 🧪 | **Attack Simulation Lab (UI):** runs real attacks with and without Ledgerline at the same time, replays each one step by step on an animated 3D attack map, lets you toggle each control, and measures which control stops which attack. Light, dark and system themes. |
 | 🛡️ | **Local-surface hardening:** the UI and HTTP proxy reject DNS-rebinding (`Host`/`Origin` checks), require a startup token (exchanged for an HttpOnly cookie) and send a strict CSP. |
 
 ## See it: the Attack Simulation Lab
@@ -54,15 +54,17 @@ Guardrail models that classify prompts are probabilistic and can be fooled like 
 - **unprotected:** a scripted agent talks straight to a deliberately malicious demo server;
 - **protected:** the same agent goes through the real Ledgerline proxy.
 
+Each side then plays back as an **attack map**: a knowledge graph of your agent, Ledgerline, the tool server, your secrets and the attacker on a tilted 3D floor. A packet travels each step of the run, and a caption explains it in plain language: *"The tool server's own code reads your secrets file. No model was involved."* You can play, pause, step, drag to turn the map, or switch to a flat view. The steps come from the run's real events, not a canned animation.
+
 The agent is a deterministic stand-in for a hijacked model: it always obeys hidden instructions in tool descriptions. That makes every run repeatable, free and testable. The only "secret" in play is a fake value in a temporary sandbox.
 
 <table>
 <tr>
-<td width="50%"><img src="docs/assets/lab-catalog.png" alt="Lab catalogue: six attacks with their outcome without and with Ledgerline"></td>
+<td width="50%"><img src="docs/assets/lab-catalog.png" alt="Lab home page in dark theme: a serif headline beside a looping attack map"></td>
 <td width="50%"><img src="docs/assets/lab-coverage.png" alt="Coverage matrix: which control stops which attack, measured by replaying each attack with one control switched off"></td>
 </tr>
 <tr>
-<td><sub><b>Attack catalogue</b>, tagged with the OWASP MCP Top 10 and OWASP Agentic Top 10, and real incidents.</sub></td>
+<td><sub><b>The Lab</b>: pick one of six attacks, tagged with the OWASP MCP Top 10, the OWASP Agentic Top 10 and real incidents.</sub></td>
 <td><sub><b>Measured coverage</b>: every attack is replayed with each control switched off. "Stops it" means the attack succeeds without that control.</sub></td>
 </tr>
 </table>
@@ -81,8 +83,8 @@ The agent is a deterministic stand-in for a hijacked model: it always obeys hidd
 > **Honest limit.** Pinning detects *change*, not *malice*. If a tool was poisoned when you approved it, pinning approves the poison. The Lab says so on screen. Every row above is also an automated regression test.
 
 <details>
-<summary>Dark theme</summary>
-<img src="docs/assets/lab-run-dark.png" alt="The Lab's run page in dark theme">
+<summary>The same attack without Ledgerline (dark theme)</summary>
+<img src="docs/assets/lab-run-dark.png" alt="Attack map without Ledgerline: the tool server reads the secrets file and the attacker receives the secret">
 </details>
 
 ## Quick start

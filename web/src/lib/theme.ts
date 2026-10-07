@@ -1,30 +1,36 @@
-// Light/dark theme: follows the system until the person picks one, then remembers it.
-export type Theme = "light" | "dark";
+// Theme: light, dark, or follow the system. The choice is remembered; "system" tracks OS changes live.
+export type ThemeChoice = "light" | "dark" | "system";
 const KEY = "ledgerline-theme";
 
-function stored(): Theme | null {
+const media = (): MediaQueryList | undefined => window.matchMedia?.("(prefers-color-scheme: dark)");
+
+export function storedTheme(): ThemeChoice {
   try {
     const value = localStorage.getItem(KEY);
-    return value === "light" || value === "dark" ? value : null;
+    return value === "light" || value === "dark" ? value : "system";
   } catch {
-    return null;
+    return "system";
   }
 }
 
-export function currentTheme(): Theme {
-  return document.documentElement.dataset.theme === "dark" ? "dark" : "light";
+function apply(choice: ThemeChoice): void {
+  const dark = choice === "dark" || (choice === "system" && (media()?.matches ?? false));
+  document.documentElement.dataset.theme = dark ? "dark" : "light";
 }
 
-export function setTheme(theme: Theme): void {
-  document.documentElement.dataset.theme = theme;
+export function setTheme(choice: ThemeChoice): void {
+  apply(choice);
   try {
-    localStorage.setItem(KEY, theme);
+    if (choice === "system") localStorage.removeItem(KEY);
+    else localStorage.setItem(KEY, choice);
   } catch {
     // storage can be unavailable (private mode); the theme still applies for this visit
   }
 }
 
 export function initTheme(): void {
-  const prefersDark = window.matchMedia?.("(prefers-color-scheme: dark)").matches ?? false;
-  document.documentElement.dataset.theme = stored() ?? (prefersDark ? "dark" : "light");
+  apply(storedTheme());
+  media()?.addEventListener("change", () => {
+    if (storedTheme() === "system") apply("system");
+  });
 }

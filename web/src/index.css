@@ -1,53 +1,70 @@
 @import "tailwindcss";
-@import "@fontsource/atkinson-hyperlegible/400.css";
-@import "@fontsource/atkinson-hyperlegible/700.css";
-@import "@fontsource/atkinson-hyperlegible/400-italic.css";
-@import "@fontsource/courier-prime/400.css";
-@import "@fontsource/courier-prime/700.css";
+@import "@fontsource/instrument-serif/400.css";
+@import "@fontsource/instrument-serif/400-italic.css";
+@import "@fontsource-variable/geist/wght.css";
+@import "@fontsource-variable/geist-mono/wght.css";
 
 /*
-  Ledger book design tokens.
-  paper/rule: green ledger paper and its ruling. ink: the writing.
-  loss: red ink, as in bookkeeping (the attacker got something).
-  safe: ledger green. guard: bank-blue ink for Ledgerline itself.
+  Design tokens. Dark is the primary look: graphite with glass panels over a soft dusk glow.
+  Colour only ever carries meaning:
+    loss  = the attacker got something (coral)
+    safe  = nothing left your machine (mint)
+    guard = Ledgerline itself (periwinkle)
+  The token names (paper, rule, ink…) are kept from v0.0.4 so every component follows the theme.
 */
 :root {
-  --paper: #f1f4ec;
-  --paper-raised: #f8faf5;
-  --rule: #c9d8c2;
-  --rule-strong: #9fbf95;
-  --ink: #1d2b3a;
-  --ink-muted: #556457;
-  --loss: #b42318;
-  --loss-wash: #f8e2df;
-  --safe: #2f6b4f;
-  --safe-wash: #dcebe1;
-  --guard: #24418a;
-  --guard-wash: #e1e7f5;
-  --focus: #24418a;
+  --paper: #eceef1;
+  --paper-raised: rgb(255 255 255 / 0.62);
+  --glass: rgb(255 255 255 / 0.55);
+  --glass-strong: rgb(255 255 255 / 0.8);
+  --rule: rgb(20 24 32 / 0.09);
+  --rule-strong: rgb(20 24 32 / 0.18);
+  --ink: #14161a;
+  --ink-muted: #5d626c;
+  --loss: #c8321f;
+  --loss-wash: rgb(200 50 31 / 0.1);
+  --safe: #13805a;
+  --safe-wash: rgb(19 128 90 / 0.1);
+  --guard: #3f5bd8;
+  --guard-wash: rgb(63 91 216 / 0.1);
+  --button: #14161a;
+  --button-ink: #f5f5f3;
+  --focus: #3f5bd8;
+  --glow-a: rgb(160 178 230 / 0.55);
+  --glow-b: rgb(236 196 170 / 0.45);
+  --floor-line: rgb(20 24 32 / 0.07);
   color-scheme: light;
 }
 
 :root[data-theme="dark"] {
-  --paper: #121c17;
-  --paper-raised: #17241d;
-  --rule: #24362c;
-  --rule-strong: #35503f;
-  --ink: #dde6dd;
-  --ink-muted: #9db0a2;
-  --loss: #f07167;
-  --loss-wash: #3a1d1b;
-  --safe: #6cc59a;
-  --safe-wash: #183327;
-  --guard: #8fa8f0;
-  --guard-wash: #1c2744;
-  --focus: #8fa8f0;
+  --paper: #0c0d10;
+  --paper-raised: rgb(255 255 255 / 0.045);
+  --glass: rgb(22 24 29 / 0.55);
+  --glass-strong: rgb(30 32 38 / 0.82);
+  --rule: rgb(255 255 255 / 0.08);
+  --rule-strong: rgb(255 255 255 / 0.16);
+  --ink: #f3f3f1;
+  --ink-muted: #9a9ea7;
+  --loss: #ff7b6b;
+  --loss-wash: rgb(255 123 107 / 0.12);
+  --safe: #6fe0b4;
+  --safe-wash: rgb(111 224 180 / 0.1);
+  --guard: #a7b9ff;
+  --guard-wash: rgb(167 185 255 / 0.12);
+  --button: #f3f3f1;
+  --button-ink: #0c0d10;
+  --focus: #a7b9ff;
+  --glow-a: rgb(70 92 160 / 0.35);
+  --glow-b: rgb(150 96 72 / 0.22);
+  --floor-line: rgb(255 255 255 / 0.05);
   color-scheme: dark;
 }
 
 @theme inline {
   --color-paper: var(--paper);
   --color-paper-raised: var(--paper-raised);
+  --color-glass: var(--glass);
+  --color-glass-strong: var(--glass-strong);
   --color-rule: var(--rule);
   --color-rule-strong: var(--rule-strong);
   --color-ink: var(--ink);
@@ -58,8 +75,11 @@
   --color-safe-wash: var(--safe-wash);
   --color-guard: var(--guard);
   --color-guard-wash: var(--guard-wash);
-  --font-sans: "Atkinson Hyperlegible", ui-sans-serif, system-ui, sans-serif;
-  --font-mono: "Courier Prime", ui-monospace, "SFMono-Regular", Menlo, monospace;
+  --color-button: var(--button);
+  --color-button-ink: var(--button-ink);
+  --font-sans: "Geist Variable", ui-sans-serif, system-ui, sans-serif;
+  --font-serif: "Instrument Serif", ui-serif, Georgia, serif;
+  --font-mono: "Geist Mono Variable", ui-monospace, "SFMono-Regular", Menlo, monospace;
 }
 
 html {
@@ -67,7 +87,7 @@ html {
   color: var(--ink);
   font-family: var(--font-sans);
   font-size: 16px;
-  line-height: 1.5;
+  line-height: 1.55;
   -webkit-font-smoothing: antialiased;
 }
 
@@ -76,23 +96,47 @@ body {
   min-height: 100vh;
 }
 
+/* The dusk behind the glass: two soft lights low on the horizon, fixed so panels slide over it. */
+.backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    radial-gradient(60rem 28rem at 18% 108%, var(--glow-a), transparent 70%),
+    radial-gradient(48rem 24rem at 82% 112%, var(--glow-b), transparent 70%), var(--paper);
+}
+
+.glass {
+  background: var(--glass);
+  border: 1px solid var(--rule);
+  backdrop-filter: blur(22px) saturate(140%);
+  -webkit-backdrop-filter: blur(22px) saturate(140%);
+}
+
+.display {
+  font-family: var(--font-serif);
+  font-weight: 400;
+  letter-spacing: -0.015em;
+  line-height: 1.04;
+}
+
 :focus-visible {
   outline: 2px solid var(--focus);
   outline-offset: 2px;
-  border-radius: 2px;
+  border-radius: 6px;
 }
 
-/* A ruled ledger row: the rule under each entry is the structure of the page. */
+/* Rows separated by a hairline: used by lists and the event log. */
 .ruled > * + * {
   border-top: 1px solid var(--rule);
 }
 
-/* The double rule between the two ledger columns, in Ledgerline's ink. */
+/* The divider between the two columns of the event log, in Ledgerline's colour. */
 .double-rule {
-  border-left: 3px double var(--guard);
+  border-left: 1px solid var(--guard-wash);
 }
 
-/* Entries are inked in as they arrive. */
 @keyframes ink-in {
   from {
     opacity: 0;
@@ -107,7 +151,54 @@ body {
   animation: ink-in 220ms ease-out both;
 }
 
-/* A message travelling along the flow strip. */
+/* ---------- The attack stage ---------- */
+
+.stage {
+  perspective: 1700px;
+  perspective-origin: 50% 40%;
+}
+
+/* The floor the graph lies on. --tilt and --spin come from the component (drag to turn). */
+.stage-plane {
+  position: absolute;
+  inset: 0;
+  transform-style: preserve-3d;
+  transform: rotateX(var(--tilt, 52deg)) rotateZ(var(--spin, 0deg));
+  transition: transform 700ms cubic-bezier(0.2, 0.7, 0.2, 1);
+  background-image:
+    linear-gradient(var(--floor-line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--floor-line) 1px, transparent 1px);
+  background-size: 40px 40px;
+  mask-image: radial-gradient(closest-side, black 55%, transparent 100%);
+  -webkit-mask-image: radial-gradient(closest-side, black 55%, transparent 100%);
+}
+.stage-plane[data-dragging="true"] {
+  transition: none;
+}
+.stage-graph {
+  position: absolute;
+  inset: 0;
+  transform-style: preserve-3d;
+  transform: rotateX(var(--tilt, 52deg)) rotateZ(var(--spin, 0deg));
+  transition: transform 700ms cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+.stage-graph[data-dragging="true"] {
+  transition: none;
+}
+
+/* Nodes stand up on their spot on the floor and keep facing the viewer. */
+.stage-node {
+  position: absolute;
+  transform-origin: 50% 100%;
+  transform: translate(-50%, -100%) rotateZ(calc(-1 * var(--spin, 0deg)))
+    rotateX(calc(-1 * var(--tilt, 52deg)));
+  transition: transform 700ms cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+.stage-graph[data-dragging="true"] .stage-node {
+  transition: none;
+}
+
+/* A packet travelling along an edge (offset-path set inline). */
 @keyframes travel {
   from {
     offset-distance: 0%;
@@ -116,13 +207,95 @@ body {
     offset-distance: 100%;
   }
 }
+@keyframes travel-halt {
+  from {
+    offset-distance: 0%;
+  }
+  to {
+    offset-distance: 46%;
+  }
+}
 .packet {
-  animation: travel 520ms ease-in-out both;
+  offset-rotate: 0deg;
+  animation: travel 1.1s cubic-bezier(0.45, 0, 0.25, 1) both;
+}
+.packet[data-halt="true"] {
+  animation: travel-halt 0.9s cubic-bezier(0.3, 0, 0.2, 1) both;
+}
+
+@keyframes dash {
+  to {
+    stroke-dashoffset: -24;
+  }
+}
+.edge-live {
+  stroke-dasharray: 6 6;
+  animation: dash 0.9s linear infinite;
+}
+
+@keyframes ring {
+  from {
+    transform: scale(0.85);
+    opacity: 0.7;
+  }
+  to {
+    transform: scale(1.6);
+    opacity: 0;
+  }
+}
+.ring {
+  animation: ring 1.6s ease-out infinite;
+}
+
+/* The node a step is about glows softly in that step's colour (set as --pulse). */
+@keyframes node-pulse {
+  from {
+    box-shadow:
+      0 0 0 0 color-mix(in srgb, var(--pulse) 55%, transparent),
+      0 18px 40px -18px rgb(0 0 0 / 0.55);
+  }
+  to {
+    box-shadow:
+      0 0 0 14px transparent,
+      0 18px 40px -18px rgb(0 0 0 / 0.55);
+  }
+}
+.node-pulse {
+  animation: node-pulse 1.4s ease-out infinite;
+}
+
+@keyframes caption-in {
+  from {
+    opacity: 0;
+    filter: blur(4px);
+  }
+  to {
+    opacity: 1;
+    filter: none;
+  }
+}
+.caption-in {
+  animation: caption-in 420ms ease-out both;
 }
 
 @media (prefers-reduced-motion: reduce) {
   .ink-in,
-  .packet {
+  .packet,
+  .edge-live,
+  .ring,
+  .node-pulse,
+  .caption-in {
     animation: none;
+  }
+  .packet {
+    offset-distance: 100%;
+  }
+  .packet[data-halt="true"] {
+    offset-distance: 46%;
+  }
+  .stage-plane,
+  .stage-graph,
+  .stage-node {
+    transition: none;
   }
 }

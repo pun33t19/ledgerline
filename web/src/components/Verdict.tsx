@@ -19,9 +19,9 @@ export function Verdict({ view, running }: Props) {
     return (
       <div
         aria-live="polite"
-        className="min-h-[5.5rem] rounded-sm border-l-4 border-loss bg-loss-wash px-4 py-3"
+        className="min-h-[5.5rem] rounded-2xl border border-loss/25 bg-loss-wash px-5 py-4"
       >
-        <p className="text-lg font-bold text-loss">The attacker got the secret</p>
+        <p className="text-lg font-medium text-loss">The attacker got the secret</p>
         <ul className="mt-1 space-y-0.5 text-sm">
           {view.stolen.map((s) => (
             <li key={s.seq}>
@@ -36,9 +36,9 @@ export function Verdict({ view, running }: Props) {
   return (
     <div
       aria-live="polite"
-      className="min-h-[5.5rem] rounded-sm border-l-4 border-safe bg-safe-wash px-4 py-3"
+      className="min-h-[5.5rem] rounded-2xl border border-safe/25 bg-safe-wash px-5 py-4"
     >
-      <p className="text-lg font-bold text-safe">
+      <p className="text-lg font-medium text-safe">
         {stoppedBy.length > 0 ? "Stopped before any harm" : "No harm done"}
       </p>
       {stoppedBy.length > 0 && (

@@ -63,7 +63,7 @@ export function LedgerEntries({ entries, showMessages, onSelect }: Props) {
             <button
               type="button"
               onClick={() => onSelect(entry)}
-              className="grid w-full grid-cols-[3.75rem_1fr] gap-x-3 px-1 py-1.5 text-left hover:bg-paper-raised"
+              className="grid w-full grid-cols-[3.75rem_1fr] gap-x-3 px-1 py-1.5 text-left hover:bg-paper-raised rounded-lg"
             >
               <span className="pt-0.5 text-right font-mono text-xs tabular-nums text-ink-muted">
                 {(entry.t_ms / 1000).toFixed(2)}s
@@ -73,7 +73,7 @@ export function LedgerEntries({ entries, showMessages, onSelect }: Props) {
                   {who}
                 </span>
                 <span
-                  className={`block break-words ${entry.type === "message" ? "font-mono text-[13px]" : ""} ${strong ? TONE[tone] : "text-ink"} ${entry.type === "decision" || entry.type === "exfiltration" ? "font-bold" : ""}`}
+                  className={`block break-words ${entry.type === "message" ? "font-mono text-[13px]" : ""} ${strong ? TONE[tone] : "text-ink"} ${entry.type === "decision" || entry.type === "exfiltration" ? "font-medium" : ""}`}
                 >
                   {what}
                 </span>

@@ -94,6 +94,7 @@ For UI development with hot reload, run the API with `uv run ledgerline ui --dev
   - CSP.
 - `ledgerline proxy http` uses the same guard.
 - On the web side, `useRunEvents` → `lib/runState.ts` (`applyEvent` reducer) → pages and components. The typed `RunEvent` union in `sim/events.py` is the contract.
+- The run page's 3D attack map (`components/AttackStage.tsx`) plays back beats built by `lib/story.ts`, a pure function over one side's events. If a scenario's steps or event wording change, update `story.ts` and `story.test.ts` to match.
 - `web/src/api/schema.d.ts` is generated: never edit it by hand. Run `make web-types` after changing any API or pydantic model, and commit the result, because CI fails on drift.
 - The built UI goes to `src/ledgerline/api/static/` (gitignored).
 

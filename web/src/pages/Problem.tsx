@@ -5,7 +5,7 @@ export function Problem({ error }: { error: unknown }) {
   if (error instanceof ApiError && error.status === 401) {
     return (
       <section className="max-w-prose">
-        <h1 className="text-2xl font-bold">Open the Lab from its link</h1>
+        <h1 className="display text-[2.4rem]">Open the Lab from its link</h1>
         <p className="mt-2">
           The Lab only answers browsers that arrived through the link{" "}
           <code className="font-mono">ledgerline ui</code> printed in your terminal. Open that link again, or
@@ -16,7 +16,7 @@ export function Problem({ error }: { error: unknown }) {
   }
   return (
     <section className="max-w-prose">
-      <h1 className="text-2xl font-bold">The Lab couldn't load this</h1>
+      <h1 className="display text-[2.4rem]">The Lab couldn't load this</h1>
       <p className="mt-2">
         {error instanceof Error ? error.message : String(error)}. Check that{" "}
         <code className="font-mono">ledgerline ui</code> is still running in your terminal.

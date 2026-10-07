@@ -68,7 +68,7 @@
   <text class="mute" x="285" y="419" font-size="11.5">→ cookie, CSP</text>
   <rect class="box" x="490" y="344" width="200" height="82" rx="8"/>
   <text class="ink" x="505" y="368" font-size="13" font-weight="600">React 19 + TypeScript</text>
-  <text class="mute" x="505" y="387" font-size="11.5">side-by-side runs, inspector,</text>
+  <text class="mute" x="505" y="387" font-size="11.5">3D attack replay, inspector,</text>
   <text class="mute" x="505" y="403" font-size="11.5">control toggles, measured</text>
   <text class="mute" x="505" y="419" font-size="11.5">coverage heatmap</text>
   <path class="ev" d="M470 385H488" marker-end="url(#b)"/>
