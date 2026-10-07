@@ -7,6 +7,7 @@ import { useRunEvents } from "../api/useRunEvents";
 import { AttackStage } from "../components/AttackStage";
 import { ControlSwitches } from "../components/ControlSwitches";
 import { Inspector } from "../components/Inspector";
+import { LedgerChain } from "../components/LedgerChain";
 import { LedgerEntries } from "../components/LedgerEntries";
 import { Tags } from "../components/Tags";
 import { ToolLens } from "../components/ToolLens";
@@ -168,6 +169,7 @@ export function RunPage() {
         <Tabs.List aria-label="Run details" className="flex gap-1 border-b border-rule">
           {[
             ["ledger", "Event log"],
+            ["chain", "Ledger"],
             ["tools", "What the model reads"],
           ].map(([value, label]) => (
             <Tabs.Trigger
@@ -209,6 +211,10 @@ export function RunPage() {
               </section>
             ))}
           </div>
+        </Tabs.Content>
+
+        <Tabs.Content value="chain" className="pt-6">
+          <LedgerChain key={runId} entries={view.ledger} running={running} />
         </Tabs.Content>
 
         <Tabs.Content value="tools" className="pt-6">

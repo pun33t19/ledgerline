@@ -73,6 +73,34 @@ test.describe("Attack Simulation Lab", () => {
     await expect(steps.last()).toHaveAccessibleName(/Your secret never left/);
   });
 
+  test("ledger: the chain verifies, and rewriting the blocked call breaks it at that entry", async ({
+    page,
+  }) => {
+    await page.goto(`/?token=${TOKEN}`);
+    await page.getByRole("button", { name: "Watch a silent rug pull" }).click();
+    await expect(column(page, "With Ledgerline").getByText("Stopped before any harm")).toBeVisible();
+    await page.getByRole("tab", { name: "Ledger", exact: true }).click();
+    const ledger = page.getByRole("region", { name: "The ledger" });
+
+    await ledger.getByRole("button", { name: "Verify the chain" }).click();
+    await expect(ledger.getByText("Chain intact: all 7 entries verified.")).toBeVisible();
+
+    await ledger.getByRole("button", { name: "Tamper with the ledger" }).click();
+    const blocked = ledger.getByRole("article", { name: "Entry 7" });
+    await expect(blocked.getByText("blocked by Check before every call")).toBeVisible();
+    await blocked.getByRole("button", { name: "Rewrite as allowed" }).click();
+    await ledger.getByRole("button", { name: "Verify the chain" }).click();
+    await expect(
+      ledger.getByText("Entry 7 was changed after it was written", { exact: false }),
+    ).toBeVisible();
+    await expect(ledger.getByText("Entries 1 to 6 are intact.", { exact: false })).toBeVisible();
+    await expect(blocked.getByText("broken here")).toBeVisible();
+
+    await ledger.getByRole("button", { name: "Undo my edits" }).click();
+    await ledger.getByRole("button", { name: "Verify the chain" }).click();
+    await expect(ledger.getByText("Chain intact: all 7 entries verified.")).toBeVisible();
+  });
+
   test("rug pull: the model's view shows the changed description and that Ledgerline hides it", async ({
     page,
   }) => {

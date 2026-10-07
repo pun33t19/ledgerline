@@ -1,13 +1,13 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 300" role="img" aria-labelledby="t d" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 310" role="img" aria-labelledby="t d" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif">
   <title id="t">Lifecycle of one tools/call</title>
-  <desc id="d">A tools/call is parsed strictly, the tool is checked against the lock file, its live definition is re-fetched and re-hashed, and only then is the call forwarded. Any failure returns a JSON-RPC error to the host and the server never runs the call.</desc>
+  <desc id="d">A tools/call is parsed strictly, the tool is checked against the lock file, its live definition is re-fetched and re-hashed, the decision is written to the hash-chained ledger and committed, and only then is the call forwarded. The reply is recorded as an outcome entry. Blocked calls are recorded too; if the ledger write fails, the call is blocked.</desc>
   <style>
     .bg{fill:#F1F4EC}.box{fill:#FFFFFF;stroke:#C9D8C2;stroke-width:1.5}.ok{fill:#FFFFFF;stroke:#2F6B4F;stroke-width:2}
-    .bad{fill:#FBEAE8;stroke:#B42318;stroke-width:1.5}
+    .led{fill:#FFFFFF;stroke:#24418A;stroke-width:2}.bad{fill:#FBEAE8;stroke:#B42318;stroke-width:1.5}
     .ink{fill:#1D2B3A}.mute{fill:#55655F}.guard{fill:#24418A}.safe{fill:#2F6B4F}.loss{fill:#B42318}
     .line{stroke:#1D2B3A;stroke-width:1.6;fill:none}.no{stroke:#B42318;stroke-width:1.4;fill:none;stroke-dasharray:4 3}
     @media (prefers-color-scheme: dark){
-      .bg{fill:#0F1720}.box,.ok{fill:#16212C}.box{stroke:#2E4038}.ok{stroke:#7CC4A0}.bad{fill:#2A1715;stroke:#F2827A}
+      .bg{fill:#0F1720}.box,.ok,.led{fill:#16212C}.box{stroke:#2E4038}.ok{stroke:#7CC4A0}.led{stroke:#8FA8E8}.bad{fill:#2A1715;stroke:#F2827A}
       .ink{fill:#E6ECE3}.mute{fill:#9AA9A2}.guard{fill:#8FA8E8}.safe{fill:#7CC4A0}.loss{fill:#F2827A}
       .line{stroke:#C9D3CC}.no{stroke:#F2827A}
     }
@@ -16,45 +16,52 @@
     <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" class="ink"/></marker>
     <marker id="r" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" class="loss"/></marker>
   </defs>
-  <rect class="bg" width="960" height="300" rx="14"/>
+  <rect class="bg" width="960" height="310" rx="14"/>
   <text class="ink" x="30" y="40" font-size="16" font-weight="700">One <tspan font-family="ui-monospace, Menlo, monospace">tools/call</tspan> through Ledgerline</text>
 
   <g font-size="13">
-    <rect class="box" x="30" y="70" width="140" height="80" rx="9"/>
-    <text class="ink" x="100" y="100" text-anchor="middle" font-weight="700">1 · Parse</text>
-    <text class="mute" x="100" y="120" text-anchor="middle" font-size="11.5">strict JSON-RPC;</text>
-    <text class="mute" x="100" y="136" text-anchor="middle" font-size="11.5">headers match body</text>
+    <rect class="box" x="24" y="70" width="128" height="84" rx="9"/>
+    <text class="ink" x="88" y="100" text-anchor="middle" font-weight="700">1 · Parse</text>
+    <text class="mute" x="88" y="120" text-anchor="middle" font-size="11.5">strict JSON-RPC;</text>
+    <text class="mute" x="88" y="136" text-anchor="middle" font-size="11.5">headers match body</text>
 
-    <rect class="box" x="210" y="70" width="160" height="80" rx="9"/>
-    <text class="ink" x="290" y="100" text-anchor="middle" font-weight="700">2 · Is it pinned?</text>
-    <text class="mute" x="290" y="120" text-anchor="middle" font-size="11.5">tool name is in</text>
-    <text class="mute" x="290" y="136" text-anchor="middle" font-size="11.5">ledgerline.lock</text>
+    <rect class="box" x="176" y="70" width="132" height="84" rx="9"/>
+    <text class="ink" x="242" y="100" text-anchor="middle" font-weight="700">2 · Pinned?</text>
+    <text class="mute" x="242" y="120" text-anchor="middle" font-size="11.5">tool is in</text>
+    <text class="mute" x="242" y="136" text-anchor="middle" font-size="11.5">ledgerline.lock</text>
 
-    <rect class="box" x="410" y="70" width="190" height="80" rx="9"/>
-    <text class="ink" x="505" y="100" text-anchor="middle" font-weight="700">3 · Still the same?</text>
-    <text class="mute" x="505" y="120" text-anchor="middle" font-size="11.5">re-fetch tools/list, hash</text>
-    <text class="mute" x="505" y="136" text-anchor="middle" font-size="11.5">RFC 8785 JSON, compare</text>
+    <rect class="box" x="332" y="70" width="158" height="84" rx="9"/>
+    <text class="ink" x="411" y="100" text-anchor="middle" font-weight="700">3 · Still the same?</text>
+    <text class="mute" x="411" y="120" text-anchor="middle" font-size="11.5">re-fetch the definition,</text>
+    <text class="mute" x="411" y="136" text-anchor="middle" font-size="11.5">re-hash, compare</text>
 
-    <rect class="ok" x="640" y="70" width="140" height="80" rx="9"/>
-    <text class="safe" x="710" y="100" text-anchor="middle" font-weight="700">4 · Forward</text>
-    <text class="mute" x="710" y="120" text-anchor="middle" font-size="11.5">bytes unchanged</text>
-    <text class="mute" x="710" y="136" text-anchor="middle" font-size="11.5">to the server</text>
+    <rect class="led" x="514" y="70" width="156" height="84" rx="9"/>
+    <text class="guard" x="592" y="100" text-anchor="middle" font-weight="700">4 · Record</text>
+    <text class="mute" x="592" y="120" text-anchor="middle" font-size="11.5">decision → ledger,</text>
+    <text class="mute" x="592" y="136" text-anchor="middle" font-size="11.5">committed first</text>
 
-    <rect class="box" x="815" y="70" width="115" height="80" rx="9"/>
-    <text class="ink" x="872" y="100" text-anchor="middle" font-weight="700">5 · Reply</text>
-    <text class="mute" x="872" y="120" text-anchor="middle" font-size="11.5">tools/list replies</text>
-    <text class="mute" x="872" y="136" text-anchor="middle" font-size="11.5">filtered</text>
+    <rect class="ok" x="694" y="70" width="112" height="84" rx="9"/>
+    <text class="safe" x="750" y="100" text-anchor="middle" font-weight="700">5 · Forward</text>
+    <text class="mute" x="750" y="120" text-anchor="middle" font-size="11.5">bytes unchanged</text>
+    <text class="mute" x="750" y="136" text-anchor="middle" font-size="11.5">to the server</text>
+
+    <rect class="box" x="830" y="70" width="106" height="84" rx="9"/>
+    <text class="ink" x="883" y="100" text-anchor="middle" font-weight="700">6 · Reply</text>
+    <text class="mute" x="883" y="120" text-anchor="middle" font-size="11.5">outcome entry,</text>
+    <text class="mute" x="883" y="136" text-anchor="middle" font-size="11.5">linked to step 4</text>
   </g>
-  <path class="line" d="M170 110H208" marker-end="url(#a)"/>
-  <path class="line" d="M370 110H408" marker-end="url(#a)"/>
-  <path class="line" d="M600 110H638" marker-end="url(#a)"/>
-  <path class="line" d="M780 110H813" marker-end="url(#a)"/>
+  <path class="line" d="M152 112H174" marker-end="url(#a)"/>
+  <path class="line" d="M308 112H330" marker-end="url(#a)"/>
+  <path class="line" d="M490 112H512" marker-end="url(#a)"/>
+  <path class="line" d="M670 112H692" marker-end="url(#a)"/>
+  <path class="line" d="M806 112H828" marker-end="url(#a)"/>
 
-  <path class="no" d="M100 150V205" marker-end="url(#r)"/>
-  <path class="no" d="M290 150V205" marker-end="url(#r)"/>
-  <path class="no" d="M505 150V205" marker-end="url(#r)"/>
-  <rect class="bad" x="30" y="207" width="580" height="74" rx="9"/>
-  <text class="loss" x="50" y="233" font-size="13.5" font-weight="700">Blocked: JSON-RPC error back to the host; the server never sees the call</text>
-  <text class="mute" x="50" y="254" font-size="11.5">Each block names its control: strict-parsing · tool-pinning · verify-before-call.</text>
-  <text class="mute" x="50" y="271" font-size="11.5">If a check itself can't run, the call is blocked (fail closed).</text>
+  <path class="no" d="M88 154V211" marker-end="url(#r)"/>
+  <path class="no" d="M242 154V211" marker-end="url(#r)"/>
+  <path class="no" d="M411 154V211" marker-end="url(#r)"/>
+  <path class="no" d="M592 154V211" marker-end="url(#r)"/>
+  <rect class="bad" x="24" y="213" width="646" height="76" rx="9"/>
+  <text class="loss" x="44" y="239" font-size="13.5" font-weight="700">Blocked: a tool error goes back to the host; the server never sees the call</text>
+  <text class="mute" x="44" y="260" font-size="11.5">Blocks from steps 2 and 3 are recorded too, as "deny" with the control that decided.</text>
+  <text class="mute" x="44" y="277" font-size="11.5">If a check, or the ledger write itself, can't complete, the call is blocked (fail closed).</text>
 </svg>

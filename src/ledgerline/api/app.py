@@ -8,6 +8,7 @@
     GET  /api/runs/{id}                 a run with all its events so far
     WS   /api/runs/{id}/events          live events (replays earlier ones first)
     GET  /api/coverage                  which control stops which attack (measured, cached)
+    POST /api/ledger/verify             check a chain of ledger entries (the tamper demo sends edited copies)
 
 Everything else serves the built React app (web/ → src/ledgerline/api/static).
 """
@@ -30,6 +31,7 @@ from pydantic import BaseModel, Field, TypeAdapter
 
 from ledgerline import __version__
 from ledgerline.api.security import SESSION_COOKIE, LocalGuard, LocalGuardMiddleware
+from ledgerline.ledger.verify import VerifyResult, verify_chain
 from ledgerline.sim.catalog import BY_ID, SCENARIOS
 from ledgerline.sim.coverage import Coverage, compute_coverage
 from ledgerline.sim.events import Controls, Outcome, RunEvent, RunFinished, RunStarted, Verdict
@@ -81,6 +83,11 @@ class RunRecord(RunSummary):
 
 class SessionRequest(BaseModel):
     token: str
+
+
+class VerifyRequest(BaseModel):
+    # Free-form on purpose: the tamper demo sends entries that may no longer match the schema.
+    entries: list[dict[str, Any]] = Field(max_length=10_000)
 
 
 class Health(BaseModel):
@@ -253,6 +260,10 @@ def create_app(guard: LocalGuard, static_dir: Path = STATIC_DIR) -> FastAPI:
                     break
                 await changed.wait()
             await ws.close()
+
+    @app.post("/api/ledger/verify")
+    async def verify_ledger(body: VerifyRequest) -> VerifyResult:
+        return verify_chain(body.entries)
 
     @app.get("/api/coverage")
     async def coverage() -> Coverage:

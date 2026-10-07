@@ -18,6 +18,10 @@ from anyio.streams.buffered import BufferedByteReceiveStream
 
 from ledgerline.demo.common import SECRETS_ENV
 from ledgerline.jsonrpc import JSON, Kind, Message
+from ledgerline.ledger.digest import Digester
+from ledgerline.ledger.interceptor import LedgerInterceptor
+from ledgerline.ledger.schema import Entry
+from ledgerline.ledger.store import MemoryStore
 from ledgerline.pin.interceptor import PinInterceptor
 from ledgerline.pin.lockfile import Lockfile, PinnedTool
 from ledgerline.proxy.events import Action, Hop, ProxyEvents
@@ -29,6 +33,7 @@ from ledgerline.sim.events import (
     Controls,
     Decision,
     Exfiltration,
+    LedgerEntry,
     MessageEvent,
     Mode,
     Node,
@@ -38,6 +43,7 @@ from ledgerline.sim.events import (
 from ledgerline.sim.scenario import Discover, ListTools, Scenario
 
 FAKE_SECRET = "FAKE_API_KEY=demo-not-a-real-key"  # noqa: S105 - deliberately fake bait value
+LAB_USER = "lab-visitor"
 RUN_TIMEOUT = 60.0
 
 _HOPS: dict[Hop, tuple[Node, Node]] = {
@@ -58,6 +64,15 @@ Kind_ = Literal["request", "notification", "response", "invalid"]
 
 def _dict(value: Any) -> dict[str, Any]:
     return value if isinstance(value, dict) else {}
+
+
+def server_label(command: list[str]) -> str:
+    """'demo-rugpull --after 3' for `python -m ledgerline.demo.servers.rugpull --after 3 --exfil-log …`."""
+    module = command[2].rsplit(".", 1)[-1] if len(command) > 2 else command[0]
+    args = command[3:]
+    if "--exfil-log" in args:
+        args = args[: args.index("--exfil-log")]
+    return " ".join([f"demo-{module}", *args])
 
 
 def summarize(body: Any) -> tuple[Kind_, str, str | None, Any]:
@@ -192,6 +207,8 @@ class Runner:
         self._emit = emit
         self._start = time.monotonic()
         self._seq = 0
+        self.ledger = MemoryStore()  # the protected side's ledger, for this run only
+        self.ledger_run = f"lab-{scenario.id}-{os.urandom(3).hex()}"
 
     def emit(self, event: Any) -> None:
         self._seq += 1
@@ -328,8 +345,23 @@ class Runner:
             interceptors.append(
                 PinInterceptor(lock, verify_each_call=self.controls.verify_each_call, on_alert=events.alert)
             )
+
+        def pinned_hash(name: str) -> str | None:
+            pin = lock.tools.get(name) if lock else None
+            return pin.sha256 if pin else None
+
+        ledger = LedgerInterceptor(
+            Chain(interceptors),
+            self.ledger,
+            run_id=self.ledger_run,
+            server=server_label(command),
+            digester=Digester.random(),
+            user=LAB_USER,
+            tool_hash=pinned_hash,
+            on_entry=lambda e: self.emit(LedgerEntry(mode="protected", entry=Entry.model_validate(e))),
+        )
         proxy = StdioProxy(
-            command, Chain(interceptors), events=events, strict_parsing=self.controls.strict_parsing, env=env
+            command, ledger, events=events, strict_parsing=self.controls.strict_parsing, env=env
         )
 
         to_proxy_send, to_proxy_recv = anyio.create_memory_object_stream[bytes](64)

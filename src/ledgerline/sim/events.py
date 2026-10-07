@@ -6,6 +6,8 @@ from typing import Annotated, Any, Literal
 
 from pydantic import BaseModel, Field
 
+from ledgerline.ledger.schema import Entry
+
 Mode = Literal["unprotected", "protected"]
 Node = Literal["host", "ledgerline", "server"]
 Verdict = Literal["harmed", "safe"]
@@ -108,6 +110,14 @@ class Outcome(_Event):
     stopped_by: list[str] = Field(default_factory=list)
 
 
+class LedgerEntry(_Event):
+    """An entry the protected side's ledger wrote (before the call it records was forwarded)."""
+
+    type: Literal["ledger_entry"] = "ledger_entry"
+    mode: Mode
+    entry: Entry
+
+
 class RunFinished(_Event):
     type: Literal["run_finished"] = "run_finished"
     status: Literal["finished", "failed"]
@@ -124,6 +134,7 @@ RunEvent = Annotated[
     | Menu
     | Exfiltration
     | Outcome
+    | LedgerEntry
     | RunFinished,
     Field(discriminator="type"),
 ]

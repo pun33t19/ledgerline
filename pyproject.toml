@@ -12,6 +12,7 @@ dependencies = [
     "fastapi>=0.120",
     "httpx>=0.28",
     "mcp==2.2.0",
+    "psycopg[binary]>=3.2",
     "rfc8785>=0.1.4",
     "starlette>=0.48",
     "uvicorn>=0.31",
@@ -35,6 +36,7 @@ dev = [
     "pip-audit>=2.9",
     "pytest>=8.4",
     "ruff>=0.14",
+    "testcontainers[postgres]>=4.10",
 ]
 
 # Builds the beginner's guide PDF (docs/guide/build_guide.py): `make guide`.

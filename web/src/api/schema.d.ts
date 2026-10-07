@@ -38,6 +38,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/ledger/verify": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Verify Ledger */
+        post: operations["verify_ledger_api_ledger_verify_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/runs": {
         parameters: {
             query?: never;
@@ -111,6 +128,24 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /** Actor */
+        Actor: {
+            /**
+             * Agent
+             * @description The MCP client, e.g. 'claude-code 2.1.0', from its clientInfo.
+             */
+            agent: string | null;
+            /**
+             * On Behalf Of Chain
+             * @description Who delegated to whom, outermost first (user, then agent). Phase 10 extends it.
+             */
+            on_behalf_of_chain: string[];
+            /**
+             * User
+             * @description The person the agent acts for, if known.
+             */
+            user: string | null;
+        };
         /** Alert */
         Alert: {
             /** Details */
@@ -231,6 +266,100 @@ export interface components {
              */
             type: "decision";
         };
+        /** DecisionRecord */
+        DecisionRecord: {
+            /**
+             * Control
+             * @description Which control decided, e.g. 'verify-before-call'.
+             */
+            control: string | null;
+            /**
+             * Effect
+             * @enum {string}
+             */
+            effect: "allow" | "deny";
+            /** Reason */
+            reason: string | null;
+        };
+        /** Entry */
+        Entry: {
+            actor: components["schemas"]["Actor"];
+            /**
+             * Args Digest
+             * @description HMAC-SHA256 (tenant key) over the RFC 8785 form of the arguments (ADR-008).
+             */
+            args_digest: string | null;
+            /** @description Set on request entries. */
+            decision: components["schemas"]["DecisionRecord"] | null;
+            /**
+             * Entry Hash
+             * @description SHA-256 of the RFC 8785 form of this entry without entry_hash.
+             */
+            entry_hash: string;
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "request" | "outcome";
+            /** Method */
+            method: string;
+            /** @description Set on outcome entries. */
+            outcome: components["schemas"]["OutcomeRecord"] | null;
+            /**
+             * Prev Hash
+             * @description entry_hash of the previous entry; 64 zeros first.
+             */
+            prev_hash: string;
+            /**
+             * Protocol
+             * @constant
+             */
+            protocol: "mcp";
+            /**
+             * Run Id
+             * @description The chain this entry belongs to (one proxy session).
+             */
+            run_id: string;
+            /**
+             * Schema Version
+             * @constant
+             */
+            schema_version: "0.1";
+            /**
+             * Seq
+             * @description Position in the run's chain, from 1, with no gaps.
+             */
+            seq: number;
+            /**
+             * Server
+             * @description Which server: its command line or URL.
+             */
+            server: string;
+            /**
+             * Session Taint
+             * @description Reserved for Phase 5.
+             */
+            session_taint: string | null;
+            /** Tenant */
+            tenant: string;
+            /** Tool */
+            tool: string | null;
+            /**
+             * Tool Def Sha256
+             * @description The pinned (approved) definition's RFC 8785 SHA-256, if the tool is pinned.
+             */
+            tool_def_sha256: string | null;
+            /**
+             * Trace Id
+             * @description Reserved for Phase 7 (OpenTelemetry).
+             */
+            trace_id: string | null;
+            /**
+             * Ts
+             * @description When it was written, RFC 3339 UTC with milliseconds.
+             */
+            ts: string;
+        };
         /** Exfiltration */
         Exfiltration: {
             /** Data */
@@ -273,6 +402,33 @@ export interface components {
             status: "ok";
             /** Version */
             version: string;
+        };
+        /**
+         * LedgerEntry
+         * @description An entry the protected side's ledger wrote (before the call it records was forwarded).
+         */
+        LedgerEntry: {
+            entry: components["schemas"]["Entry"];
+            /**
+             * Mode
+             * @enum {string}
+             */
+            mode: "unprotected" | "protected";
+            /**
+             * Seq
+             * @default 0
+             */
+            seq: number;
+            /**
+             * T Ms
+             * @default 0
+             */
+            t_ms: number;
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            type: "ledger_entry";
         };
         /**
          * Menu
@@ -387,6 +543,25 @@ export interface components {
              */
             verdict: "harmed" | "safe";
         };
+        /** OutcomeRecord */
+        OutcomeRecord: {
+            /**
+             * Request Hash
+             * @description entry_hash of the request this answers.
+             */
+            request_hash: string;
+            /**
+             * Result Digest
+             * @description HMAC-SHA256 of the result (or error), like args_digest.
+             */
+            result_digest: string | null;
+            /**
+             * Status
+             * @description 'tool_error': the tool answered isError; 'error': a JSON-RPC error.
+             * @enum {string}
+             */
+            status: "ok" | "tool_error" | "error";
+        };
         /**
          * Pinned
          * @description The tool definitions a person approved before the protected run (via `ledgerline pin`).
@@ -409,6 +584,24 @@ export interface components {
              * @enum {string}
              */
             type: "pinned";
+        };
+        /** Problem */
+        Problem: {
+            /** Expected */
+            expected?: string | null;
+            /** Found */
+            found?: string | null;
+            /** Index */
+            index: number;
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "malformed" | "wrong_run" | "bad_seq" | "broken_link" | "edited" | "dangling_reference";
+            /** Message */
+            message: string;
+            /** Seq */
+            seq: number | null;
         };
         /** RunFinished */
         RunFinished: {
@@ -439,7 +632,7 @@ export interface components {
         RunRecord: {
             controls: components["schemas"]["Controls"];
             /** Events */
-            events: (components["schemas"]["RunStarted"] | components["schemas"]["Pinned"] | components["schemas"]["Step"] | components["schemas"]["MessageEvent"] | components["schemas"]["Decision"] | components["schemas"]["Alert"] | components["schemas"]["Menu"] | components["schemas"]["Exfiltration"] | components["schemas"]["Outcome"] | components["schemas"]["RunFinished"])[];
+            events: (components["schemas"]["RunStarted"] | components["schemas"]["Pinned"] | components["schemas"]["Step"] | components["schemas"]["MessageEvent"] | components["schemas"]["Decision"] | components["schemas"]["Alert"] | components["schemas"]["Menu"] | components["schemas"]["Exfiltration"] | components["schemas"]["Outcome"] | components["schemas"]["LedgerEntry"] | components["schemas"]["RunFinished"])[];
             /** Outcomes */
             outcomes: {
                 [key: string]: components["schemas"]["Outcome"];
@@ -610,6 +803,25 @@ export interface components {
             /** Error Type */
             type: string;
         };
+        /** VerifyRequest */
+        VerifyRequest: {
+            /** Entries */
+            entries: {
+                [key: string]: unknown;
+            }[];
+        };
+        /** VerifyResult */
+        VerifyResult: {
+            /** Count */
+            count: number;
+            /** Head Hash */
+            head_hash: string | null;
+            /** Ok */
+            ok: boolean;
+            problem?: components["schemas"]["Problem"] | null;
+            /** Verified */
+            verified: number;
+        };
     };
     responses: never;
     parameters: never;
@@ -655,6 +867,39 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Health"];
+                };
+            };
+        };
+    };
+    verify_ledger_api_ledger_verify_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["VerifyRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VerifyResult"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };

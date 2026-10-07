@@ -22,8 +22,10 @@ jobs:
         run: make lint
       - name: typecheck
         run: make typecheck
-      - name: test
+      - name: test (the ledger's database tests run against Postgres in Docker)
         run: make test
+        env:
+          LEDGERLINE_REQUIRE_DOCKER: "1" # never skip the Postgres tests silently in CI
       - name: fixtures are reproducible
         run: make fixtures-check
       - name: dependency audit

@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 470" role="img" aria-labelledby="t d" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif">
   <title id="t">Ledgerline architecture</title>
-  <desc id="d">An AI host sends MCP tool calls through Ledgerline, which parses them strictly, runs them through an interceptor chain (tool pinning and per-call verification) and forwards them to the tool server. Ledgerline emits events to a FastAPI backend that streams them over WebSocket to the React Attack Simulation Lab.</desc>
+  <desc id="d">An AI host sends MCP tool calls through Ledgerline, which parses them strictly, runs them through an interceptor chain (tool pinning, per-call verification, and a hash-chained ledger written before each call is forwarded) and forwards them to the tool server. Ledgerline emits events to a FastAPI backend that streams them over WebSocket to the React Attack Simulation Lab.</desc>
   <style>
     .bg{fill:#F1F4EC}.box{fill:#FFFFFF;stroke:#C9D8C2;stroke-width:1.5}
     .core{fill:#FFFFFF;stroke:#24418A;stroke-width:2}
@@ -35,6 +35,7 @@
   <text class="mute" x="270" y="146" font-size="12">Interceptor chain (Forward · Replace · Block), fail closed</text>
   <rect class="chip" x="270" y="156" width="98" height="30" rx="6"/><text class="guard" x="319" y="176" text-anchor="middle" font-size="12" font-weight="600">tool pinning</text>
   <rect class="chip" x="374" y="156" width="116" height="30" rx="6"/><text class="guard" x="432" y="176" text-anchor="middle" font-size="12" font-weight="600">verify every call</text>
+  <rect class="chip" x="496" y="156" width="194" height="30" rx="6"/><text class="guard" x="593" y="176" text-anchor="middle" font-size="12" font-weight="600">ledger: record, then forward</text>
 
   <!-- server -->
   <rect class="box" x="760" y="80" width="170" height="110" rx="10"/>
@@ -54,6 +55,12 @@
   <text class="ink" x="845" y="275" text-anchor="middle" font-size="14" font-weight="600">ledgerline.lock</text>
   <text class="mute" x="845" y="294" text-anchor="middle" font-size="11.5">RFC 8785 + SHA-256 pins</text>
   <path class="line" d="M760 280C735 280 712 250 712 212" marker-end="url(#a)"/>
+
+  <!-- ledger -->
+  <rect class="box" x="760" y="330" width="170" height="64" rx="10"/>
+  <text class="ink" x="845" y="356" text-anchor="middle" font-size="14" font-weight="600">Postgres ledger</text>
+  <text class="mute" x="845" y="375" text-anchor="middle" font-size="11.5">hash chain, append-only</text>
+  <path class="line" d="M712 196C742 196 732 362 758 362" marker-end="url(#a)"/>
 
   <!-- events to UI -->
   <path class="ev" d="M480 210V300" marker-end="url(#b)"/>

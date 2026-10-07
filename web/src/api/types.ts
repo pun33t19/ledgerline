@@ -21,6 +21,7 @@ export type Decision = S["Decision"];
 export type Alert = S["Alert"];
 export type Menu = S["Menu"];
 export type Exfiltration = S["Exfiltration"];
+export type LedgerEntry = S["LedgerEntry"];
 export type RunFinished = S["RunFinished"];
 
 export type RunEvent =
@@ -33,4 +34,9 @@ export type RunEvent =
   | Menu
   | Exfiltration
   | Outcome
+  | LedgerEntry
   | RunFinished;
+
+// The ledger (Phase 4). A record is one sealed entry; the verifier's answer explains any break.
+export type LedgerRecord = S["Entry"];
+export type VerifyResult = S["VerifyResult"];

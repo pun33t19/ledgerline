@@ -23,6 +23,7 @@ Action = Literal["blocked", "replaced", "rejected"]
 CONTROL_PINNING = "tool-pinning"
 CONTROL_VERIFY = "verify-before-call"
 CONTROL_PARSING = "strict-parsing"
+CONTROL_LEDGER = "ledger"  # fail closed: a call that couldn't be recorded isn't forwarded
 
 
 class ProxyEvents:

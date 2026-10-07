@@ -163,13 +163,25 @@ def d_big_picture() -> Drawing:
         mono_lines=False,
         title_size=8,
     )
+    box(
+        d,
+        bx,
+        62,
+        bw,
+        36,
+        "Tamper-evident ledger",
+        ["built in Phase 4"],
+        PROXY,
+        PROXY_EDGE,
+        mono_lines=False,
+        title_size=7.6,
+    )
     fut = [
-        ("Tamper-evident ledger", "Phase 4"),
         ("Policy + taint", "Phase 5"),
         ("Human approval", "Phase 6"),
         ("Merkle log, A2A…", "Phases 7–14"),
     ]
-    for i, (t, ph) in enumerate(fut):
+    for i, (t, ph) in enumerate(fut, start=1):
         box(
             d,
             bx + (i % 2) * (bw + 8),
@@ -400,7 +412,7 @@ def d_phase2_architecture() -> Drawing:
         cw,
         76,
         "JsonlLog",
-        ["observe(): all msgs", "alert(): pin events", "proxy/jsonl_log.py"],
+        ["observe(): all msgs", "alert(): pin events", "(removed in Phase 4)"],
         title_size=8,
     )
     box(
@@ -413,7 +425,18 @@ def d_phase2_architecture() -> Drawing:
         ["on_response: lists", "on_request: calls", "pin/interceptor.py"],
         title_size=8,
     )
-    box(d, ix + 8, 4, cw, 34, "--log file.jsonl", ["messages + alerts"], DATA, DATA_EDGE, mono_lines=False)
+    box(
+        d,
+        ix + 8,
+        4,
+        cw,
+        34,
+        "--log file.jsonl",
+        ["replaced by the ledger"],
+        DATA,
+        DATA_EDGE,
+        mono_lines=False,
+    )
     box(
         d,
         ix + 16 + cw,
@@ -447,7 +470,7 @@ def d_modules() -> Drawing:
         "pin/pinning.py": (cols[2], 165),
         "pin/interceptor.py": (cols[3], 165),
         "proxy/interceptor.py": (cols[0], 100),
-        "proxy/jsonl_log.py": (cols[1], 100),
+        "ledger/interceptor.py": (cols[1], 100),
         "wiretap.py": (cols[2], 100),
         "pin/lockfile.py": (cols[3], 100),
         "jsonrpc.py": (cols[0], 30),
@@ -455,7 +478,7 @@ def d_modules() -> Drawing:
         "pin/canonical.py": (cols[3], 30),
     }
     for name, (x, y) in pos.items():
-        fill, edge = (DATA, DATA_EDGE) if name.startswith("pin") else (PROXY, PROXY_EDGE)
+        fill, edge = (DATA, DATA_EDGE) if name.startswith(("pin", "ledger")) else (PROXY, PROXY_EDGE)
         if name == "cli.py":
             fill, edge = CLIENT, CLIENT_EDGE
         box(d, x, y, 110, 26, name, [], fill, edge, title_size=7.6)
@@ -478,7 +501,7 @@ def d_modules() -> Drawing:
         ("pin/pinning.py", "wiretap.py"),
         ("pin/pinning.py", "pin/lockfile.py"),
         ("pin/lockfile.py", "pin/canonical.py"),
-        ("proxy/jsonl_log.py", "proxy/interceptor.py"),
+        ("ledger/interceptor.py", "proxy/interceptor.py"),
         ("proxy/interceptor.py", "jsonrpc.py"),
     ]:
         (ax, ay), (bx, by) = pos[a], pos[b]
@@ -824,6 +847,82 @@ def d_legend() -> Drawing:
 # File reference: every tracked file, the phase it arrived in, what it does.
 # ===========================================================================
 FILES: dict[str, tuple[str, str]] = {
+    "demos/phase4.sh": (
+        "4",
+        "Phase 4 tour: Postgres, a recorded rug pull, `verify`, a superuser edit caught.",
+    ),
+    "deploy/docker-compose.yml": ("4", "Local Postgres 16 for the ledger (127.0.0.1:55432, dev passwords)."),
+    "docs/adr/ADR-007-ledger-hash-chain.md": (
+        "4",
+        "Decision: hash chain in Postgres, genesis of zeros, one chain per run.",
+    ),
+    "docs/adr/ADR-008-argument-digests-and-erasure.md": (
+        "4",
+        "Decision: HMAC digests of arguments; raw arguments optional and erasable.",
+    ),
+    "docs/adr/ADR-009-write-before-forward.md": (
+        "4",
+        "Decision: record before forwarding; refuse calls that can't be recorded.",
+    ),
+    "docs/assets/lab-ledger.png": ("4", "README screenshot: the Ledger tab catching a rewritten entry."),
+    "docs/journal/phase4.md": ("4", "Phase 4 reading, how to run the ledger, findings."),
+    "schema/event.schema.json": (
+        "4",
+        "The public ledger entry format v0.1 (generated: `make event-schema`).",
+    ),
+    "spec/vectors/chain-001.json": (
+        "4",
+        "Golden v0.1 chain plus tamper cases and the entry a verifier must reject.",
+    ),
+    "spec/vectors/deep-dive-entry-41.json": (
+        "4",
+        "The deep dive's example entry; its published hash checks the hashing rule.",
+    ),
+    "src/ledgerline/ledger/__init__.py": ("4", "Marks `ledger/` as a package."),
+    "src/ledgerline/ledger/digest.py": (
+        "4",
+        "`Digester`: HMAC-SHA256 of arguments/results; creates the key file (0600).",
+    ),
+    "src/ledgerline/ledger/hashing.py": ("4", "`seal()`, `entry_hash()`, `GENESIS`: the hash chain rule."),
+    "src/ledgerline/ledger/interceptor.py": (
+        "4",
+        "`LedgerInterceptor`: wraps the chain, writes before forwarding, fails closed.",
+    ),
+    "src/ledgerline/ledger/migrate.py": (
+        "4",
+        "Applies `migrations/*.sql` once each; can let `ledgerline_app` log in.",
+    ),
+    "src/ledgerline/ledger/migrations/0001_ledger.sql": (
+        "4",
+        "Tables, append-only trigger, `ledgerline_app` role and grants.",
+    ),
+    "src/ledgerline/ledger/schema.py": ("4", "The entry model v0.1 (Pydantic) and its JSON Schema."),
+    "src/ledgerline/ledger/store.py": ("4", "`PostgresStore` (advisory lock, LAG check) and `MemoryStore`."),
+    "src/ledgerline/ledger/verify.py": (
+        "4",
+        "`verify_chain()`: finds the first entry that can't be trusted.",
+    ),
+    "tests/ledger/__init__.py": ("4", "Marks the ledger tests as a package."),
+    "tests/ledger/conftest.py": (
+        "4",
+        "A throwaway Postgres container (skipped without Docker, except in CI).",
+    ),
+    "tests/ledger/test_digest.py": ("4", "Keyed, canonical digests; key file permissions."),
+    "tests/ledger/test_hashing.py": (
+        "4",
+        "Golden vectors, including the deep dive's; schema file up to date.",
+    ),
+    "tests/ledger/test_interceptor.py": ("4", "Write before forward; blocks recorded; fail closed."),
+    "tests/ledger/test_postgres.py": (
+        "4",
+        "Append-only roles and trigger; superuser edits caught; 50 concurrent writers.",
+    ),
+    "tests/ledger/test_proxy_ledger.py": (
+        "4",
+        "The real proxy + Postgres + `ledgerline verify`; transparency with the ledger on.",
+    ),
+    "tests/ledger/test_verify.py": ("4", "Deletion, re-sealing, references; 300 random one-character edits."),
+    "web/src/components/LedgerChain.tsx": ("4", "The Ledger tab: chain, one-click verify, tamper demo."),
     ".editorconfig": ("0", "Editor formatting rules (UTF-8, 4-space Python, tabs in Makefile)."),
     ".github/workflows/ci.yml": (
         "0",
@@ -930,10 +1029,6 @@ FILES: dict[str, tuple[str, str]] = {
     "src/ledgerline/proxy/interceptor.py": (
         "2",
         "Interceptor base class, Chain, Forward/Replace/Block, Upstream protocol.",
-    ),
-    "src/ledgerline/proxy/jsonl_log.py": (
-        "2",
-        "`--log`: plain JSONL of messages and alerts (Phase 4 replaces it).",
     ),
     "src/ledgerline/proxy/sse.py": ("2", "Splits server-sent-event streams into messages."),
     "src/ledgerline/proxy/stdio.py": ("2", "stdio relay: two loops, verification requests, shutdown."),
@@ -1100,7 +1195,7 @@ def cover(v: str) -> list:
         Spacer(1, 40),
         table(
             ["Covers", "Version", "Generated"],
-            [["Phases 0–3", f"v{v}", date.today().isoformat()]],
+            [["Phases 0–4", f"v{v}", date.today().isoformat()]],
             [2, 1, 1],
         ),
         NextPageTemplate("page"),
@@ -1165,17 +1260,17 @@ def section_big_picture() -> list:
                     "3",
                     "✓ v0.0.4",
                     "Attack Simulation Lab (UI)",
-                    "Watch each attack run without and with Ledgerline, side by side, in the browser (React + TypeScript).",
+                    "Watch each attack run without and with Ledgerline, replayed step by step on a 3D attack map (React + TypeScript).",
                 ],
                 [
                     "4",
-                    "next",
+                    "✓ v0.0.5",
                     "Tamper-evident ledger",
-                    "Every call recorded before it runs, in a log nobody can secretly edit.",
+                    "Every call recorded before it runs, in a hash chain where any edit is caught.",
                 ],
                 [
                     "5",
-                    "",
+                    "next",
                     "Policy + taint",
                     "Rules on arguments (“SELECT on tickets only”), stricter after untrusted input.",
                 ],
@@ -1389,11 +1484,16 @@ def section_layout() -> list:
 ├── src/ledgerline/                     THE PRODUCT (≈ src/main/java)
 │   ├── cli.py                          the ledgerline command          Phase 2
 │   ├── jsonrpc.py                      message parsing                 Phase 2
-│   ├── proxy/   interceptor, stdio, http, sse, jsonl_log               Phase 2
+│   ├── proxy/   interceptor, stdio, http, sse, events                  Phase 2
 │   ├── pin/     canonical, lockfile, interceptor, pinning              Phase 2
+│   ├── ledger/  schema, hashing, digest, store, verify, interceptor    Phase 4
+│   ├── sim/ api/   attack simulator + the Lab's web API                 Phase 3
 │   ├── wiretap.py                      traffic recorder                Phase 1
 │   └── demo/    client.py, common.py, servers/*.py                     Phase 1
-├── tests/                              104 tests (≈ src/test/java)
+├── tests/                              166 tests (≈ src/test/java)
+├── web/                                the Lab UI (React + TypeScript)  Phase 3
+├── schema/ spec/vectors/               ledger entry schema + vectors    Phase 4
+├── deploy/docker-compose.yml           local Postgres for the ledger    Phase 4
 ├── testdata/mcp/*.jsonl                recorded conversations
 ├── demos/phaseN.sh                     guided tours
 ├── scripts/capture-fixtures.sh         re-records the fixtures
@@ -1405,7 +1505,11 @@ def section_layout() -> list:
         table(
             ["Command", "Runs", "Purpose"],
             [
-                ["`ledgerline`", "`ledgerline.cli:main`", "The product: `pin`, `proxy stdio`, `proxy http`"],
+                [
+                    "`ledgerline`",
+                    "`ledgerline.cli:main`",
+                    "The product: `pin`, `proxy stdio|http`, `ui`, `verify`, `ledger migrate|runs|export`",
+                ],
                 ["`demo-weather`", "`demo/servers/weather.py:main`", "Honest MCP server"],
                 ["`demo-poisoned`", "`demo/servers/poisoned.py:main`", "Tool-poisoning MCP server"],
                 ["`demo-rugpull`", "`demo/servers/rugpull.py:main`", "Rug-pull MCP server"],
@@ -1670,7 +1774,7 @@ def section_phase2() -> list:
                 [
                     "Logging",
                     "`proxy/jsonl_log.py`",
-                    "Every message and alert as JSON lines (editable — Phase 4 fixes that).",
+                    "Phase 2 only: every message and alert as JSON lines, editable by anyone. Removed in Phase 4 (the ledger replaces it).",
                 ],
             ],
             [1.1, 2.6, 3.8],
@@ -1734,7 +1838,7 @@ def section_phase2() -> list:
                 [
                     "2",
                     "`cli.py` → `build_chain()`",
-                    "`Lockfile.load()` (recomputes every hash; refuses a missing lock unless `--tofu`); creates `JsonlLog` if `--log`; creates `PinInterceptor`; wraps both in `Chain`.",
+                    "`Lockfile.load()` (recomputes every hash; refuses a missing lock unless `--tofu`); creates `PinInterceptor` in a `Chain`. Since Phase 4 it wraps that chain in `LedgerInterceptor` when `--ledger` is set (the Phase 2 `--log` file is gone).",
                 ],
                 [
                     "3",
@@ -1867,7 +1971,7 @@ return FORWARD""",
                 [
                     "Logging",
                     "`--wire` recording on the client",
-                    "`--log`: every message + alerts at the proxy",
+                    "`--log` (replaced by the Phase 4 ledger)",
                 ],
                 ["demo-client", "reports changed tools", "also appeared/disappeared tools; `--no-relist`"],
                 ["Tests", "21", "104"],
@@ -2269,11 +2373,363 @@ def section_phase3() -> list:
     ]
 
 
+def d_phase4_architecture() -> Drawing:
+    d = Drawing(W, 300)
+    box(d, 0, 258, W, 34, "Transport: stdio relay / HTTP proxy", ["proxy/stdio.py  proxy/http.py"])
+    arrow(d, W / 2, 258, W / 2, 238, "every request and reply", label_dx=60)
+    d.add(
+        Rect(
+            0,
+            128,
+            W,
+            108,
+            rx=6,
+            ry=6,
+            fillColor=colors.HexColor("#f7f6fd"),
+            strokeColor=PROXY_EDGE,
+            strokeWidth=1.2,
+        )
+    )
+    label(d, 8, 224, "LedgerInterceptor (ledger/interceptor.py) wraps the chain", 7.5, PROXY_EDGE, bold=True)
+    box(
+        d,
+        12,
+        140,
+        W * 0.42,
+        70,
+        "inner Chain",
+        ["PinInterceptor (Phase 2)", "→ Forward / Replace / Block", "policy, approvals: later"],
+    )
+    steps = [
+        "1  ask the inner chain for its decision",
+        "2  build the entry: tool, pinned hash, args digest,",
+        "    decision (allow / deny + control)",
+        "3  store.append(): seal + commit",
+        "4  only now return the decision",
+        "    (a failed write returns Block: fail closed)",
+    ]
+    for i, line in enumerate(steps):
+        label(d, W * 0.42 + 26, 200 - i * 11, line, 7.2, INK)
+    arrow(d, W * 0.42 + 12, 175, W * 0.42 + 22, 175, color=MUTED)
+    cw = (W - 24) / 3
+    box(
+        d,
+        0,
+        48,
+        cw,
+        58,
+        "PostgresStore",
+        ["ledger_entries (append-only)", "ledger_args (erasable)", "advisory lock per run"],
+        DATA,
+        DATA_EDGE,
+    )
+    box(
+        d,
+        cw + 12,
+        48,
+        cw,
+        58,
+        "MemoryStore",
+        ["Lab runs and tests", "same sealing, no database"],
+        DATA,
+        DATA_EDGE,
+    )
+    box(
+        d,
+        2 * cw + 24,
+        48,
+        cw,
+        58,
+        "hashing.seal · Digester",
+        ["entry_hash = SHA-256(RFC 8785)", "args_digest = HMAC-SHA256"],
+        DATA,
+        DATA_EDGE,
+    )
+    arrow(d, cw / 2, 128, cw / 2, 106, "append", label_dx=18)
+    arrow(d, cw * 1.5 + 12, 128, cw * 1.5 + 12, 106, "Lab", label_dx=12)
+    arrow(d, cw * 2.5 + 24, 128, cw * 2.5 + 24, 106, color=MUTED)
+    box(
+        d,
+        0,
+        4,
+        W,
+        32,
+        "verify_chain (ledger/verify.py)",
+        ["ledgerline verify --run / --file   ·   the Lab's POST /api/ledger/verify   ·   + SQL LAG() check"],
+        CLIENT,
+        CLIENT_EDGE,
+    )
+    arrow(d, cw / 2, 48, cw / 2, 36, color=MUTED)
+    return d
+
+
+def d_seq_ledger() -> Drawing:
+    return sequence(
+        [
+            ("client", "AI host", CLIENT, CLIENT_EDGE),
+            ("ledger", "LedgerInterceptor", PROXY, PROXY_EDGE),
+            ("pins", "PinInterceptor", PROXY, PROXY_EDGE),
+            ("db", "Postgres", DATA, DATA_EDGE),
+            ("server", "MCP server", SERVER, SERVER_EDGE),
+        ],
+        [
+            Msg("client", "ledger", "tools/call"),
+            Msg("ledger", "pins", "decision?"),
+            Msg("pins", "server", "tools/list (re-check the definition)", "proxy"),
+            Msg("pins", "ledger", "Forward (unchanged)", "reply"),
+            Msg("ledger", "db", "lock run · read last hash · INSERT entry 5 · COMMIT"),
+            Note(("ledger", "db"), "the entry exists before the call can run", "ok"),
+            Msg("ledger", "server", "forward the original bytes"),
+            Msg("server", "ledger", "result", "reply"),
+            Msg("ledger", "db", "INSERT entry 6: outcome, request_hash = entry 5"),
+            Msg("ledger", "client", "result", "reply"),
+            Divider("after the rug pull: the next call"),
+            Msg("client", "ledger", "tools/call"),
+            Msg("pins", "ledger", "Block: changed", "blocked"),
+            Msg("ledger", "db", "INSERT entry 7: deny, verify-before-call · COMMIT"),
+            Msg("ledger", "client", "tool error", "blocked"),
+        ],
+    )
+
+
+def d_hash_chain() -> Drawing:
+    d = Drawing(W, 175)
+    bw, gap = 140, (W - 3 * 140) / 2
+    entries = [
+        ("entry 5: call, allow", "prev  2aa3…b0a2", "hash  f18b…96f8", PROXY, PROXY_EDGE),
+        ("entry 6: result, ok", "prev  f18b…96f8", "hash  c28f…e750", PROXY, PROXY_EDGE),
+        ("entry 7: call, deny → allow", "prev  c28f…e750", "hash  c8d0…6380 ≠ 85ed…", DANGER_BG, DANGER),
+    ]
+    for i, (title, prev, h, fill, edge) in enumerate(entries):
+        x = i * (bw + gap)
+        box(d, x, 92, bw, 62, title, [prev, h], fill, edge, title_size=7.8)
+        if i:
+            arrow(d, x - gap, 123, x, 123, "prev = hash", size=6.2, color=OK)
+    label(
+        d,
+        0,
+        74,
+        "Every entry stores the previous entry's hash, and its own hash covers everything in it,",
+        7.4,
+        INK,
+    )
+    label(
+        d, 0, 63, "including that link. A superuser rewrites entry 7's decision from deny to allow:", 7.4, INK
+    )
+    bullets_y = [48, 37, 26, 15]
+    texts = [
+        '• recomputing entry 7\'s hash gives 85ed…, not the c8d0… it was sealed with → "entry 7 was changed"',
+        "• re-sealing entry 7 with a new hash would break the next entry's prev_hash instead",
+        "• deleting an entry leaves a gap in seq and a link that points at nothing",
+        "• entries 1–6 still verify: the break is pinpointed, everything before it is trusted",
+    ]
+    for y, t in zip(bullets_y, texts, strict=True):
+        label(d, 6, y, t, 7.1, DANGER if "85ed" in t else INK)
+    return d
+
+
+def section_phase4() -> list:
+    return [
+        PageBreak(),
+        Heading("8. Phase 4 — The tamper-evident ledger", 0),
+        p(
+            "Until now Ledgerline stopped attacks but kept no trustworthy record. Phase 4 writes **every tool call and "
+            "Ledgerline's decision about it** into a hash-chained, append-only Postgres table, **before** the call is "
+            "forwarded. `ledgerline verify` recomputes the chain and names the first entry anyone changed."
+        ),
+        *hfig(
+            "Architecture",
+            1,
+            figure(
+                d_phase4_architecture(),
+                "Figure 18 — The ledger wraps the interceptor chain and writes before anything is forwarded.",
+            ),
+        ),
+        table(
+            ["Job", "File", "What it does"],
+            [
+                [
+                    "Entry format",
+                    "`ledger/schema.py`",
+                    "Pydantic model v0.1; `schema/event.schema.json` is generated from it.",
+                ],
+                [
+                    "Sealing",
+                    "`ledger/hashing.py`",
+                    "`seal()`: add seq + prev_hash, then entry_hash = SHA-256 of RFC 8785 JSON.",
+                ],
+                [
+                    "Digests",
+                    "`ledger/digest.py`",
+                    "HMAC-SHA256 of arguments/results with a secret key (`~/.ledgerline/digest.key`).",
+                ],
+                [
+                    "Write-before-forward",
+                    "`ledger/interceptor.py`",
+                    "Wraps the chain; records the final decision; fails closed.",
+                ],
+                [
+                    "Storage",
+                    "`ledger/store.py`",
+                    "`PostgresStore` (advisory lock, append-only) and `MemoryStore` (Lab, tests).",
+                ],
+                [
+                    "Database",
+                    "`ledger/migrations/0001_ledger.sql`, `migrate.py`",
+                    "Tables, trigger, `ledgerline_app` role; applied once each.",
+                ],
+                [
+                    "Checking",
+                    "`ledger/verify.py`",
+                    "`verify_chain()` on plain JSON: seq, link, hash, run, references.",
+                ],
+                [
+                    "Command line",
+                    "`cli.py`",
+                    "`--ledger`, `verify --run/--file`, `ledger migrate/runs/export`.",
+                ],
+                [
+                    "The Lab",
+                    "`sim/runner.py`, `web/src/components/LedgerChain.tsx`",
+                    "Protected runs keep a ledger; verify and tamper in the browser.",
+                ],
+            ],
+            [1.3, 2.6, 3.6],
+        ),
+        *hfig(
+            "Write before forward",
+            1,
+            figure(
+                d_seq_ledger(),
+                "Figure 19 — One allowed call (entries 5 and 6) and one blocked call (entry 7).",
+            ),
+        ),
+        Heading("Flow chain: one recorded call", 1),
+        table(
+            ["#", "File → function", "What happens"],
+            [
+                [
+                    "1",
+                    "`cli.py` → `build_chain()`",
+                    "With `--ledger`: wraps `Chain([PinInterceptor])` in `LedgerInterceptor`; `check_database()` fails fast if Postgres is unreachable.",
+                ],
+                [
+                    "2",
+                    "`ledger/interceptor.py` → `on_request()`",
+                    "Learns the agent's name from `clientInfo`, then asks the inner chain for its decision.",
+                ],
+                [
+                    "3",
+                    "same → `_fields()`",
+                    "Builds the entry: run, actor, server, tool, the pinned definition's hash, `args_digest`, decision.",
+                ],
+                [
+                    "4",
+                    "`ledger/store.py` → `PostgresStore.append()`",
+                    "`pg_advisory_xact_lock(run)`, read the last `(seq, entry_hash)`, `seal()`, INSERT, COMMIT.",
+                ],
+                [
+                    "5",
+                    "`ledger/interceptor.py`",
+                    "Returns the decision; only now does the transport forward or refuse the call. A failed write returns `Block` (control `ledger`).",
+                ],
+                [
+                    "6",
+                    "same → `on_response()`",
+                    "Writes the `outcome` entry with `result_digest` and `request_hash`; if that fails, the reply still goes through and the failure is logged.",
+                ],
+                [
+                    "7",
+                    "`cli.py` → `run_verify()`",
+                    "Loads the run, `verify_chain()`, plus `PostgresStore.link_breaks()` (SQL `LAG()`).",
+                ],
+            ],
+            [0.3, 2.5, 4.6],
+        ),
+        *hfig(
+            "Why an edit can't hide",
+            1,
+            figure(
+                d_hash_chain(),
+                "Figure 20 — The chain from the Phase 4 demo, after a superuser rewrote entry 7.",
+            ),
+        ),
+        table(
+            ["Layer", "Stops", "Doesn't stop"],
+            [
+                [
+                    "`ledgerline_app` role: INSERT + SELECT only",
+                    "the application rewriting history",
+                    "the owner, a superuser",
+                ],
+                [
+                    "Trigger on UPDATE / DELETE / TRUNCATE",
+                    "everyone, including the owner",
+                    "a superuser who disables triggers",
+                ],
+                [
+                    "Hash chain + `ledgerline verify`",
+                    "— (it detects rather than stops)",
+                    "deleting a whole run, or rewriting every entry: Phase 9's witnessed checkpoints",
+                ],
+            ],
+            [2.6, 2.4, 2.5],
+        ),
+        callout(
+            "Finding: the deep dive's worked example (entry 41, hash 1bd152f0…f0a6, and f7f6e750…86a1 after changing allow "
+            "to deny) recomputes byte for byte with RFC 8785 + SHA-256. It is now `spec/vectors/deep-dive-entry-41.json`, "
+            "a test vector computed independently of this code.",
+            "ok",
+        ),
+        callout(
+            "The verifier checks each entry in a fixed order (fields, seq, link, hash, run, references). The order is "
+            "what makes any single edit be reported at the entry that was edited; a property test makes 300 random "
+            "one-character edits to prove it.",
+            "note",
+        ),
+        Heading("Phase 4 for Java developers", 1),
+        table(
+            ["In ledger/", "Java world"],
+            [
+                ["psycopg `AsyncConnection`", "JDBC `Connection` (non-blocking, like R2DBC)"],
+                [
+                    "`async with conn.transaction():`",
+                    "`@Transactional`, or try-with-resources + commit/rollback",
+                ],
+                [
+                    "`pg_advisory_xact_lock(...)`",
+                    "a pessimistic lock (`SELECT … FOR UPDATE`) held until commit",
+                ],
+                ["`Jsonb(entry)`", "Hibernate's JSON type / a `PGobject` of type jsonb"],
+                [
+                    'Pydantic model with `extra="forbid"`',
+                    "a `record` + Bean Validation + Jackson `FAIL_ON_UNKNOWN_PROPERTIES`",
+                ],
+                ["`hmac.new(key, data, sha256)`", '`Mac.getInstance("HmacSHA256")`'],
+                ["`hashlib.sha256`", '`MessageDigest.getInstance("SHA-256")`'],
+                ["`LedgerStore` (a `Protocol`)", "an interface with two implementations"],
+                ["`migrations/*.sql` + `migrate.py`", "Flyway"],
+                ["testcontainers", "Testcontainers for Java (same project)"],
+                ["hypothesis property tests", "jqwik"],
+            ],
+            [3.2, 4.3],
+        ),
+        Heading("How to explain Phase 4", 2),
+        p(
+            "“Every tool call is written to a hash-chained Postgres ledger, with the decision Ledgerline made about it, "
+            "before the call is allowed to run; if it can't be written, the call is refused. The application can only "
+            "append, a trigger blocks rewrites, and if someone with superuser access edits an entry anyway, "
+            "`ledgerline verify` names exactly which one. Arguments are kept as keyed hashes, and the Lab lets you "
+            "tamper with a ledger and watch verification fail at that entry.”"
+        ),
+    ]
+
+
 def section_testing() -> list:
     return [
         PageBreak(),
         *hfig(
-            "8. How it is tested",
+            "9. How it is tested",
             0,
             figure(d_test_pyramid(), "Figure 13 — The test pyramid used in this project."),
         ),
@@ -2325,14 +2781,29 @@ def section_testing() -> list:
                     "Token, cookie, DNS-rebinding Host, foreign Origin, headers, WebSocket run stream, UI serving.",
                 ],
                 [
+                    "`tests/ledger/test_hashing.py`, `test_verify.py`, `test_digest.py`",
+                    "unit + property",
+                    "Golden vectors (incl. the deep dive's); 300 random one-character edits each caught at that entry; keyed digests.",
+                ],
+                [
+                    "`tests/ledger/test_interceptor.py`",
+                    "unit",
+                    "Write before forward; blocks recorded as deny; fail closed when the write fails or crashes after commit.",
+                ],
+                [
+                    "`tests/ledger/test_postgres.py`, `test_proxy_ledger.py`",
+                    "integration (Postgres in Docker)",
+                    "App role can't rewrite; owner blocked by the trigger; superuser edit caught; 50 concurrent writers; erasure; the real proxy + `ledgerline verify`.",
+                ],
+                [
                     "`web/src/**/*.test.ts(x)`",
                     "unit (Vitest)",
-                    "Run-state reducer, ledger labels, tool lens.",
+                    "Run-state reducer, ledger labels, tool lens, attack-map story.",
                 ],
                 [
                     "`web/e2e/lab.spec.ts`",
                     "browser (Playwright)",
-                    "Real `ledgerline ui`: refusal without link, side-by-side run, toggles, tool lens, coverage.",
+                    "Real `ledgerline ui`: refusal without link, both sides of a run, attack replay, ledger tamper demo, toggles, tool lens, coverage.",
                 ],
             ],
             [2.4, 1.3, 3.8],
@@ -2350,14 +2821,14 @@ def section_testing() -> list:
 def section_reproduce() -> list:
     return [
         PageBreak(),
-        Heading("9. Reproduce and test every phase", 0),
+        Heading("10. Reproduce and test every phase", 0),
         p("Run everything from the repository folder:"),
         code(
             "cd ~/App\\ projects/ledgerline\nmake install          # creates .venv and installs the commands"
         ),
         Heading("All automated checks", 1),
         code(
-            """make ci               # ruff + mypy --strict + all 104 tests   (≈ 40 s)
+            """make ci               # ruff + mypy --strict + all 166 tests   (≈ 90 s; Postgres tests need Docker)
 make fixtures-check   # re-record fixtures; fails if they changed
 make vuln             # dependency vulnerability audit
 make guide            # rebuild this PDF""",
@@ -2382,8 +2853,8 @@ uv run pytest tests/demo tests/test_wiretap.py -v                      # Phase 1
 # by hand, stdio:
 .venv/bin/ledgerline pin --lock /tmp/r.lock -- .venv/bin/demo-rugpull --after 3
 .venv/bin/demo-client --call get_fact_of_the_day --repeat 4 -- \\
-    .venv/bin/ledgerline proxy stdio --lock /tmp/r.lock --log /tmp/r.jsonl -- .venv/bin/demo-rugpull --after 3
-cat /tmp/r.jsonl      # every message + alerts
+    .venv/bin/ledgerline proxy stdio --lock /tmp/r.lock -- .venv/bin/demo-rugpull --after 3
+# (alerts are printed to the terminal; Phase 4 adds --ledger to record every call)
 
 # by hand, HTTP (3 terminals):
 .venv/bin/demo-rugpull --http :8081
@@ -2412,12 +2883,34 @@ make e2e       # browser tests against the real ledgerline ui
 uv run ledgerline ui --dev --no-browser --port 8765      # prints a token
 cd web && npm run dev                                     # http://127.0.0.1:5173/?token=<token>""",
         ),
+        Heading("Phase 4", 1),
+        code(
+            """./demos/phase4.sh                # needs Docker
+# expect: 7 ledger rows (3 allowed calls + results, then deny by verify-before-call)
+#         · "✓ … 7 entries, chain intact" · the app role's UPDATE refused
+#         · after the superuser edit: "✗ … Entry 7 was changed after it was written"
+
+# by hand:
+make db-up                                        # Postgres on 127.0.0.1:55432 + migrations
+export LEDGERLINE_DATABASE_URL=postgresql://ledgerline_app:app-dev-password@127.0.0.1:55432/ledgerline
+.venv/bin/demo-client --call get_fact_of_the_day --repeat 4 --no-relist -- \\
+    .venv/bin/ledgerline proxy stdio --lock /tmp/r.lock -- .venv/bin/demo-rugpull --after 3
+.venv/bin/ledgerline ledger runs
+.venv/bin/ledgerline verify --run <run id>
+.venv/bin/ledgerline verify --file spec/vectors/chain-001.json      # offline, no database
+
+# in the Lab: run "Silent rug pull" → "Ledger" tab → Verify → Tamper → Rewrite as allowed → Verify
+
+uv run pytest tests/ledger -v      # Phase 4 tests only (Postgres ones skip without Docker)
+make db-down""",
+        ),
         Heading("Try it with a real AI host (optional)", 2),
         code(
             """.venv/bin/ledgerline pin --yes --lock ~/.ledgerline-demo/weather.lock -- "$PWD/.venv/bin/demo-weather"
 claude mcp add weather-via-ledgerline -- "$PWD/.venv/bin/ledgerline" proxy stdio \\
-    --lock ~/.ledgerline-demo/weather.lock --log ~/.ledgerline-demo/weather.jsonl -- "$PWD/.venv/bin/demo-weather"
-# ask Claude Code for the weather in Pune, then:  claude mcp remove weather-via-ledgerline""",
+    --lock ~/.ledgerline-demo/weather.lock --ledger "$LEDGERLINE_DATABASE_URL" -- "$PWD/.venv/bin/demo-weather"
+# ask Claude Code for the weather in Pune, then:  .venv/bin/ledgerline ledger runs
+# and:  claude mcp remove weather-via-ledgerline""",
         ),
         callout(
             "The malicious demo servers only ever target the fake file `~/.ledgerline-demo/fake-secrets.txt`.",
@@ -2428,7 +2921,7 @@ claude mcp add weather-via-ledgerline -- "$PWD/.venv/bin/ledgerline" proxy stdio
 
 def section_limits() -> list:
     return [
-        Heading("10. Known limits and what comes next", 0),
+        Heading("11. Known limits and what comes next", 0),
         table(
             ["Limit today", "Addressed in"],
             [
@@ -2437,8 +2930,16 @@ def section_limits() -> list:
                     "Phase 5 (argument rules + taint), Phase 6 (human approval)",
                 ],
                 [
-                    "`--log` is plain JSON anyone can edit",
-                    "Phase 4 (hash-chained ledger + `ledgerline verify`)",
+                    "The ledger detects partial edits, but someone with full database access could delete a whole run, or rewrite every entry and recompute every hash",
+                    "Phase 9 (Merkle log with signed checkpoints held by outside witnesses)",
+                ],
+                [
+                    "Messages rejected by strict parsing are refused but not recorded (they can't be read reliably)",
+                    "Revisit with the Phase 13 spec",
+                ],
+                [
+                    "Argument digests carry no key identifier, so key rotation isn't visible in entries",
+                    "Phase 13 (schema v1)",
                 ],
                 [
                     "Each call costs one extra `tools/list` round trip",
@@ -2464,7 +2965,19 @@ def section_limits() -> list:
         table(
             ["Term", "Meaning"],
             [
+                [
+                    "advisory lock",
+                    "A Postgres lock on a number of your choosing; here, one per run, so appends can't race.",
+                ],
                 ["fail closed", "When unsure, refuse. (Fail open = when unsure, allow.)"],
+                [
+                    "hash chain",
+                    "Each entry includes the previous entry's hash, so editing one breaks every later link.",
+                ],
+                [
+                    "HMAC",
+                    "A hash computed with a secret key: proves a value without revealing or letting others guess it.",
+                ],
                 ["fixture (testdata)", "A recorded conversation used to check behaviour doesn't change."],
                 ["fixture (pytest)", "A helper injected into a test by parameter name."],
                 ["interceptor", "A class that sees each message and returns Forward, Replace or Block."],
@@ -2475,6 +2988,10 @@ def section_limits() -> list:
                 ["TOFU", "Trust on first use: approve a tool automatically the first time it's seen."],
                 ["transport", "How messages travel: stdio pipes or HTTP."],
                 ["upstream", "The real server behind the proxy."],
+                [
+                    "write before forward",
+                    "Record a call (and commit it) before letting it run; refuse it if recording fails.",
+                ],
             ],
             [1.6, 5.5],
         ),
@@ -2521,6 +3038,7 @@ def build() -> None:
         section_phase1,
         section_phase2,
         section_phase3,
+        section_phase4,
         section_testing,
         section_reproduce,
         section_limits,

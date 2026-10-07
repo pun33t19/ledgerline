@@ -3,7 +3,7 @@
 
 UV ?= uv
 
-.PHONY: guide help install web-install web-types web-build web-ci e2e ui test lint fmt typecheck vuln fixtures fixtures-check demo ci
+.PHONY: db-up db-down event-schema guide help install web-install web-types web-build web-ci e2e ui test lint fmt typecheck vuln fixtures fixtures-check demo ci
 
 help: ## Show available targets
 	@grep -E '^[a-zA-Z_-]+:.*?## ' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  %-15s %s\n", $$1, $$2}'
@@ -58,6 +58,18 @@ e2e: web-build ## Browser tests against the real `ledgerline ui` (needs `npx pla
 
 ui: web-build ## Build the UI and open the Attack Simulation Lab
 	$(UV) run ledgerline ui
+
+event-schema: ## Regenerate schema/event.schema.json from the ledger entry model
+	$(UV) run python -m ledgerline.ledger.schema > schema/event.schema.json
+
+db-up: ## Start the local Postgres ledger (deploy/docker-compose.yml) and apply migrations
+	docker compose -f deploy/docker-compose.yml up -d --wait
+	LEDGERLINE_APP_PASSWORD=app-dev-password $(UV) run ledgerline ledger migrate \
+	  --ledger postgresql://ledgerline:owner-dev-password@127.0.0.1:55432/ledgerline \
+	  --app-password-env LEDGERLINE_APP_PASSWORD
+
+db-down: ## Stop the local Postgres ledger (data is kept; add -v by hand to delete it)
+	docker compose -f deploy/docker-compose.yml down
 
 guide: ## Build the beginner's guide PDF (docs/guide/Ledgerline-Guide.pdf)
 	$(UV) run --group guide python docs/guide/build_guide.py

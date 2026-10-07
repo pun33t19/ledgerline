@@ -2,7 +2,7 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-Ledgerline is an authorization and evidence layer for AI-agent tool calls. It sits as a proxy between an MCP client and an MCP server and checks every message. Today it pins tool definitions. Phase 4 adds a hash-chained ledger, and later phases add policy, approval, a Merkle log and A2A. The roadmap and per-phase scope live in `docs/roadmap.md`, and decisions are recorded in `docs/adr/`.
+Ledgerline is an authorization and evidence layer for AI-agent tool calls. It sits as a proxy between an MCP client and an MCP server and checks every message. Today it pins tool definitions and records every tool call in a hash-chained ledger before forwarding it; later phases add policy, approval, a Merkle log and A2A. The roadmap and per-phase scope live in `docs/roadmap.md`, and decisions are recorded in `docs/adr/`.
 
 ## Languages
 
@@ -24,7 +24,9 @@ make typecheck        # mypy strict over src + tests
 make test             # uv run pytest
 make fixtures-check   # re-record testdata/mcp and fail on any diff (CI runs it)
 make vuln             # pip-audit
-make demo PHASE=3     # demos/phase3.sh
+make demo PHASE=4     # demos/phase4.sh (needs Docker)
+make db-up            # local Postgres ledger + migrations (make db-down to stop)
+make event-schema     # regenerate schema/event.schema.json
 make guide            # beginner's guide PDF (uv group "guide", ReportLab)
 ```
 
@@ -75,6 +77,15 @@ For UI development with hot reload, run the API with `uv run ledgerline ui --dev
 - It also blocks calls to them, and by default re-verifies the live definition before every call. That per-call check is what stops a silent rug pull.
 - The default is fail closed: if the upstream check can't run, the call is blocked.
 
+### Ledger (`ledger/`)
+
+- `LedgerInterceptor` **wraps** the inner chain (it is not one more link): it takes the chain's final decision on each `tools/call`, appends a `request` entry (including blocks, as `deny` with the control), and only then returns the decision, so the proxy forwards after the commit. A failed write returns `Block` with control `ledger` (fail closed). Replies produce a linked `outcome` entry.
+- Entry format v0.1 is `ledger/schema.py`; every field is always present (nulls), because the hashed bytes must not depend on omitted fields. `schema/event.schema.json` is generated: run `make event-schema` after changing the model (a test checks drift).
+- `hashing.seal`: `entry_hash` = SHA-256 of RFC 8785 JSON without `entry_hash`; genesis `prev_hash` is 64 zeros. `verify.verify_chain` works on raw dicts; its check order (fields, seq, link, hash, run, references) is what makes a single edit reported at the edited entry. Don't reorder it.
+- Stores: `PostgresStore` (advisory lock per run, append-only table + trigger, `ledgerline_app` role with INSERT/SELECT) and `MemoryStore` (Lab runs, tests). Migrations are `ledger/migrations/NNNN_*.sql`, applied by `ledgerline ledger migrate` as the owner.
+- Arguments/results are HMAC digests (`digest.py`, key at `~/.ledgerline/digest.key`); raw args only with `--keep-args` into the erasable `ledger_args` table.
+- Golden vectors in `spec/vectors/` (one is the deep dive's example, computed independently) must keep verifying; don't regenerate them to make a test pass.
+
 ### Attack Simulation Lab (`sim/`)
 
 - A `Scenario` (`sim/catalog.py`) pairs a demo server with scripted agent steps and the expected verdicts.
@@ -94,11 +105,14 @@ For UI development with hot reload, run the API with `uv run ledgerline ui --dev
   - CSP.
 - `ledgerline proxy http` uses the same guard.
 - On the web side, `useRunEvents` → `lib/runState.ts` (`applyEvent` reducer) → pages and components. The typed `RunEvent` union in `sim/events.py` is the contract.
+- The protected lane wraps its chain in `LedgerInterceptor` with a `MemoryStore`; entries stream as `ledger_entry` events. The Ledger tab's tamper demo edits a copy in the browser and posts it to `POST /api/ledger/verify`.
 - The run page's 3D attack map (`components/AttackStage.tsx`) plays back beats built by `lib/story.ts`, a pure function over one side's events. If a scenario's steps or event wording change, update `story.ts` and `story.test.ts` to match.
 - `web/src/api/schema.d.ts` is generated: never edit it by hand. Run `make web-types` after changing any API or pydantic model, and commit the result, because CI fails on drift.
 - The built UI goes to `src/ledgerline/api/static/` (gitignored).
 
 ## Invariants and gotchas
+
+- **Postgres tests** (`tests/ledger/test_postgres.py`, `test_proxy_ledger.py`) start `postgres:16-alpine` via testcontainers and skip when Docker isn't running, unless `LEDGERLINE_REQUIRE_DOCKER=1` (set in CI). Local DB for manual use: `make db-up` (127.0.0.1:55432; dev passwords in `deploy/docker-compose.yml`).
 
 - **Transparency:** with no interceptors that intervene, the proxy must forward bytes unchanged. `make fixtures-check` re-records `testdata/mcp/*.jsonl`, both direct and through the proxy, and they must stay byte-identical.
 - The malicious demo servers (`demo/servers/poisoned.py`, `rugpull.py`) must only ever target the fake bait secrets file.
@@ -117,6 +131,6 @@ Each phase ends with:
 - a `CHANGELOG.md` entry;
 - the guide extended (`make guide`);
 - the roadmap status updated;
-- a `__version__` bump and the next patch tag (Phase 4 → v0.0.5).
+- a `__version__` bump and the next patch tag (Phase 5 → v0.0.6).
 
 From Phase 3 on, every phase also ships a UI slice (feature IDs `UI-xx` in `docs/research/ui-research.md`) with a Playwright test for its main flow.

@@ -5,9 +5,19 @@ from typing import Any
 
 import pytest
 
+from ledgerline.ledger.verify import verify_chain
 from ledgerline.sim.catalog import BY_ID, SCENARIOS
 from ledgerline.sim.coverage import compute_coverage
-from ledgerline.sim.events import Controls, Decision, Exfiltration, MessageEvent, Outcome, Pinned, Step
+from ledgerline.sim.events import (
+    Controls,
+    Decision,
+    Exfiltration,
+    LedgerEntry,
+    MessageEvent,
+    Outcome,
+    Pinned,
+    Step,
+)
 from ledgerline.sim.runner import Runner
 from ledgerline.sim.scenario import Scenario
 
@@ -70,6 +80,18 @@ async def test_event_stream_is_well_formed() -> None:
     assert any(
         isinstance(e, Step) and e.mode == "protected" and "Blocked by Ledgerline" in e.detail for e in events
     )
+
+
+async def test_protected_side_keeps_a_valid_ledger_including_the_block() -> None:
+    events = await run(BY_ID["silent-rug-pull"])
+    entries = [e.entry.model_dump() for e in events if isinstance(e, LedgerEntry)]
+    assert all(e.mode == "protected" for e in events if isinstance(e, LedgerEntry))
+    assert verify_chain(entries).ok
+    requests = [e for e in entries if e["kind"] == "request"]
+    assert [r["decision"]["effect"] for r in requests] == ["allow", "allow", "allow", "deny"]
+    assert requests[-1]["decision"]["control"] == "verify-before-call"
+    assert requests[0]["tool_def_sha256"] is not None  # the pinned definition it ran under
+    assert requests[0]["actor"]["agent"] == "ledgerline-sim-agent 0.1.0"
 
 
 async def test_secret_never_leaves_the_sandbox() -> None:

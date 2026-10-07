@@ -1,0 +1,28 @@
+# Local services for Ledgerline. Development only: the passwords below are not secrets.
+#
+#   docker compose -f deploy/docker-compose.yml up -d --wait
+#   export LEDGERLINE_DATABASE_URL=postgresql://ledgerline_app:app-dev-password@127.0.0.1:55432/ledgerline
+#
+# The owner account (ledgerline) runs migrations; the proxy connects as ledgerline_app,
+# which may only INSERT and SELECT ledger entries.
+name: ledgerline
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: ledgerline
+      POSTGRES_PASSWORD: owner-dev-password
+      POSTGRES_DB: ledgerline
+    ports:
+      - "127.0.0.1:55432:5432" # loopback only; 55432 avoids clashing with a local Postgres
+    volumes:
+      - ledger-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ledgerline -d ledgerline"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+
+volumes:
+  ledger-data:

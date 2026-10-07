@@ -15,7 +15,7 @@ The honest novelty is *not* "a signed agent log" or "an MCP firewall with receip
 
 **Decisions:** **Python for everything** (ADR-002), with two exceptions: the Phase 9 transparency-log service `tlogd` in **Go** on Tessera (ADR-002 amendment), and the **UI in React + TypeScript** under `web/` (ADR-005, 2026-10-03). UI work starts in Phase 3 and every later phase ships a UI slice (decided 2026-10-03; phases after 2 were renumbered +1). Full roadmap before the first public release (repo `pun33t19/ledgerline` stays private until Phase 14). ~20–25 h/week, ~28–30 weeks total. Commits authored only by the maintainer, never with Claude attribution.
 
-**Status:** Phase 0 ✅ (v0.0.0) · Phase 1 ✅ (Go v0.0.1, rewritten in Python as v0.0.2) · Phase 2 ✅ (v0.0.3) · Phase 3 ✅ (v0.0.4) · next: Phase 4, tamper-evident ledger.
+**Status:** Phase 0 ✅ (v0.0.0) · Phase 1 ✅ (Go v0.0.1, rewritten in Python as v0.0.2) · Phase 2 ✅ (v0.0.3) · Phase 3 ✅ (v0.0.4) · Phase 4 ✅ (v0.0.5) · next: Phase 5, policy engine.
 
 ---
 
@@ -145,7 +145,12 @@ The UI's first and most visible piece. It runs the attacks we already have **unp
 
 ---
 
-## Phase 4 — Ledger v1: hash-chained Postgres + `verify` (Weeks 8–9)
+## Phase 4 — Ledger v1: hash-chained Postgres + `verify` ✅ (v0.0.5)
+
+**Built as planned, with these deliberate changes:** the ledger *wraps* the interceptor chain instead of being the last link, so calls another control blocks are recorded too (ADR-009); genesis `prev_hash` is 64 zeros (the deep dive's example reproduces exactly) rather than the IETF draft's `null` (ADR-007); raw arguments go to a plain erasable `ledger_args` table, opt-in with `--keep-args`, rather than an encrypted column (ADR-008); entries carry `kind` (`request`/`outcome`) and an `outcome` record linked by `request_hash`; Lab runs use an in-memory store with the same sealing and verifier, so the tamper demo edits a copy in the browser and the server verifies it (no superuser needed in the UI); `ledgerline verify --file` and `ledger export` were added for offline checks. Details: `CHANGELOG.md`, `docs/journal/phase4.md`.
+
+### Original plan
+
 
 **Read:** Schneier & Kelsey; AppMaster tamper-evident Postgres pattern; RFC 8785; NIST SP 800-92 overview; DDIA transactions chapter; psycopg 3 async docs.
 

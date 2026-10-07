@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "./client";
-import type { Controls, Coverage, RunSummary, ScenarioInfo } from "./types";
+import type { Controls, Coverage, RunSummary, ScenarioInfo, VerifyResult } from "./types";
 
 export function useScenarios() {
   return useQuery({
@@ -24,5 +24,13 @@ export function useStartRun() {
     mutationFn: (body: { scenario_id: string; controls: Controls }) =>
       api<RunSummary>("/api/runs", { method: "POST", body: JSON.stringify(body) }),
     onSuccess: () => client.invalidateQueries({ queryKey: ["runs"] }),
+  });
+}
+
+/** Verify a chain of ledger entries (the tamper demo sends its edited copy). */
+export function useVerifyLedger() {
+  return useMutation({
+    mutationFn: (entries: unknown[]) =>
+      api<VerifyResult>("/api/ledger/verify", { method: "POST", body: JSON.stringify({ entries }) }),
   });
 }

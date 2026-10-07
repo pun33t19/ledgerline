@@ -4,6 +4,7 @@ import type {
   Controls,
   Decision,
   Exfiltration,
+  LedgerRecord,
   Menu,
   MessageEvent,
   Mode,
@@ -31,6 +32,8 @@ export interface RunView {
   controls?: Controls;
   pinned?: ToolDef[];
   error?: string | null;
+  /** What the protected side's ledger recorded, in order. */
+  ledger: LedgerRecord[];
   modes: Record<Mode, ModeView>;
 }
 
@@ -38,6 +41,7 @@ const emptyMode = (): ModeView => ({ entries: [], menus: [], decisions: [], stol
 
 export const initialRun = (): RunView => ({
   status: "connecting",
+  ledger: [],
   modes: { unprotected: emptyMode(), protected: emptyMode() },
 });
 
@@ -81,6 +85,8 @@ export function applyEvent(view: RunView, event: RunEvent): RunView {
         entries: [...m.entries, event],
         stolen: [...m.stolen, event],
       }));
+    case "ledger_entry":
+      return { ...view, ledger: [...view.ledger, event.entry] };
     case "step":
     case "alert":
       return updateMode(view, event.mode, (m) => ({ ...m, entries: [...m.entries, event] }));

@@ -1,0 +1,302 @@
+{
+  "$defs": {
+    "Actor": {
+      "additionalProperties": false,
+      "properties": {
+        "agent": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "The MCP client, e.g. 'claude-code 2.1.0', from its clientInfo.",
+          "title": "Agent"
+        },
+        "on_behalf_of_chain": {
+          "description": "Who delegated to whom, outermost first (user, then agent). Phase 10 extends it.",
+          "items": {
+            "type": "string"
+          },
+          "title": "On Behalf Of Chain",
+          "type": "array"
+        },
+        "user": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "The person the agent acts for, if known.",
+          "title": "User"
+        }
+      },
+      "required": [
+        "user",
+        "agent",
+        "on_behalf_of_chain"
+      ],
+      "title": "Actor",
+      "type": "object"
+    },
+    "DecisionRecord": {
+      "additionalProperties": false,
+      "properties": {
+        "control": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Which control decided, e.g. 'verify-before-call'.",
+          "title": "Control"
+        },
+        "effect": {
+          "enum": [
+            "allow",
+            "deny"
+          ],
+          "title": "Effect",
+          "type": "string"
+        },
+        "reason": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Reason"
+        }
+      },
+      "required": [
+        "effect",
+        "control",
+        "reason"
+      ],
+      "title": "DecisionRecord",
+      "type": "object"
+    },
+    "OutcomeRecord": {
+      "additionalProperties": false,
+      "properties": {
+        "request_hash": {
+          "description": "entry_hash of the request this answers.",
+          "pattern": "^[0-9a-f]{64}$",
+          "title": "Request Hash",
+          "type": "string"
+        },
+        "result_digest": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "HMAC-SHA256 of the result (or error), like args_digest.",
+          "title": "Result Digest"
+        },
+        "status": {
+          "description": "'tool_error': the tool answered isError; 'error': a JSON-RPC error.",
+          "enum": [
+            "ok",
+            "tool_error",
+            "error"
+          ],
+          "title": "Status",
+          "type": "string"
+        }
+      },
+      "required": [
+        "status",
+        "result_digest",
+        "request_hash"
+      ],
+      "title": "OutcomeRecord",
+      "type": "object"
+    }
+  },
+  "$id": "https://github.com/pun33t19/ledgerline/schema/event.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "actor": {
+      "$ref": "#/$defs/Actor"
+    },
+    "args_digest": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "description": "HMAC-SHA256 (tenant key) over the RFC 8785 form of the arguments (ADR-008).",
+      "title": "Args Digest"
+    },
+    "decision": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/DecisionRecord"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "description": "Set on request entries."
+    },
+    "entry_hash": {
+      "description": "SHA-256 of the RFC 8785 form of this entry without entry_hash.",
+      "pattern": "^[0-9a-f]{64}$",
+      "title": "Entry Hash",
+      "type": "string"
+    },
+    "kind": {
+      "enum": [
+        "request",
+        "outcome"
+      ],
+      "title": "Kind",
+      "type": "string"
+    },
+    "method": {
+      "title": "Method",
+      "type": "string"
+    },
+    "outcome": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/OutcomeRecord"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "description": "Set on outcome entries."
+    },
+    "prev_hash": {
+      "description": "entry_hash of the previous entry; 64 zeros first.",
+      "pattern": "^[0-9a-f]{64}$",
+      "title": "Prev Hash",
+      "type": "string"
+    },
+    "protocol": {
+      "const": "mcp",
+      "title": "Protocol",
+      "type": "string"
+    },
+    "run_id": {
+      "description": "The chain this entry belongs to (one proxy session).",
+      "title": "Run Id",
+      "type": "string"
+    },
+    "schema_version": {
+      "const": "0.1",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "seq": {
+      "description": "Position in the run's chain, from 1, with no gaps.",
+      "minimum": 1,
+      "title": "Seq",
+      "type": "integer"
+    },
+    "server": {
+      "description": "Which server: its command line or URL.",
+      "title": "Server",
+      "type": "string"
+    },
+    "session_taint": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "description": "Reserved for Phase 5.",
+      "title": "Session Taint"
+    },
+    "tenant": {
+      "title": "Tenant",
+      "type": "string"
+    },
+    "tool": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Tool"
+    },
+    "tool_def_sha256": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "description": "The pinned (approved) definition's RFC 8785 SHA-256, if the tool is pinned.",
+      "title": "Tool Def Sha256"
+    },
+    "trace_id": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "description": "Reserved for Phase 7 (OpenTelemetry).",
+      "title": "Trace Id"
+    },
+    "ts": {
+      "description": "When it was written, RFC 3339 UTC with milliseconds.",
+      "title": "Ts",
+      "type": "string"
+    }
+  },
+  "required": [
+    "schema_version",
+    "seq",
+    "ts",
+    "run_id",
+    "tenant",
+    "kind",
+    "actor",
+    "protocol",
+    "method",
+    "server",
+    "tool",
+    "tool_def_sha256",
+    "args_digest",
+    "session_taint",
+    "decision",
+    "outcome",
+    "trace_id",
+    "prev_hash",
+    "entry_hash"
+  ],
+  "title": "Ledgerline ledger entry v0.1",
+  "type": "object"
+}

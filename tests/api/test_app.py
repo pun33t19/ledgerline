@@ -134,6 +134,19 @@ def test_run_streams_events_to_completion(client: TestClient) -> None:
     assert len(record["events"]) == len(events)
     assert client.get("/api/runs", headers=AUTH).json()[0]["run_id"] == started["run_id"]
 
+    # The ledger entries survive the trip to the browser and back: they still verify,
+    # and the tamper demo's edited copy fails at the edited entry.
+    ledger = [e["entry"] for e in events if e["type"] == "ledger_entry"]
+    verdict = client.post("/api/ledger/verify", json={"entries": ledger}, headers=AUTH).json()
+    assert verdict["ok"]
+    assert verdict["count"] == len(ledger) > 0
+    blocked = ledger[-1]
+    assert blocked["decision"]["effect"] == "deny"
+    blocked["decision"]["effect"] = "allow"
+    verdict = client.post("/api/ledger/verify", json={"entries": ledger}, headers=AUTH).json()
+    assert not verdict["ok"]
+    assert (verdict["problem"]["seq"], verdict["problem"]["kind"]) == (blocked["seq"], "edited")
+
 
 def test_coverage_endpoint(client: TestClient, monkeypatch: pytest.MonkeyPatch) -> None:
     async def fake() -> Coverage:

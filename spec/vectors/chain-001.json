@@ -1,0 +1,501 @@
+{
+  "description": "A v0.1 chain of three entries, sealed with RFC 8785 + SHA-256 and genesis prev_hash of 64 zeros. Digests use HMAC-SHA256 with the key below (UTF-8). Each tampered case names the first entry a verifier must reject.",
+  "digest_key_utf8": "ledgerline-test-vector-key-0001",
+  "entries": [
+    {
+      "schema_version": "0.1",
+      "run_id": "vector-run-001",
+      "tenant": "default",
+      "actor": {
+        "user": "alice",
+        "agent": "demo-client 0.1.0",
+        "on_behalf_of_chain": [
+          "alice",
+          "demo-client 0.1.0"
+        ]
+      },
+      "protocol": "mcp",
+      "method": "tools/call",
+      "server": "demo-rugpull --after 3",
+      "session_taint": null,
+      "trace_id": null,
+      "ts": "2026-10-07T09:00:00.000Z",
+      "kind": "request",
+      "tool": "get_fact_of_the_day",
+      "tool_def_sha256": "b45a341a4f4485912a8ee46f3bc4eb94b5969d6890d3833fab72157d177ad3cf",
+      "args_digest": "8775b1334713d4d4ca22f337a2fa51d8117c46d13f4e64a114d92c3134fe7e12",
+      "decision": {
+        "effect": "allow",
+        "control": null,
+        "reason": null
+      },
+      "outcome": null,
+      "seq": 1,
+      "prev_hash": "0000000000000000000000000000000000000000000000000000000000000000",
+      "entry_hash": "a231afb588c3236a3312d36cdb085c8ad7d1622811e2ed5ca77b4795894b50cc"
+    },
+    {
+      "schema_version": "0.1",
+      "run_id": "vector-run-001",
+      "tenant": "default",
+      "actor": {
+        "user": "alice",
+        "agent": "demo-client 0.1.0",
+        "on_behalf_of_chain": [
+          "alice",
+          "demo-client 0.1.0"
+        ]
+      },
+      "protocol": "mcp",
+      "method": "tools/call",
+      "server": "demo-rugpull --after 3",
+      "session_taint": null,
+      "trace_id": null,
+      "ts": "2026-10-07T09:00:00.050Z",
+      "kind": "outcome",
+      "tool": "get_fact_of_the_day",
+      "tool_def_sha256": "b45a341a4f4485912a8ee46f3bc4eb94b5969d6890d3833fab72157d177ad3cf",
+      "args_digest": null,
+      "decision": null,
+      "outcome": {
+        "status": "ok",
+        "result_digest": "3b8921c39e2ebb7bab4a1d59714ba03e95ff6a1ce7276557ebb9ed5492cc3eed",
+        "request_hash": "a231afb588c3236a3312d36cdb085c8ad7d1622811e2ed5ca77b4795894b50cc"
+      },
+      "seq": 2,
+      "prev_hash": "a231afb588c3236a3312d36cdb085c8ad7d1622811e2ed5ca77b4795894b50cc",
+      "entry_hash": "c0646538c6a5e17781651a861cb1c58594eef1c1d540f04838aaf89f250758e5"
+    },
+    {
+      "schema_version": "0.1",
+      "run_id": "vector-run-001",
+      "tenant": "default",
+      "actor": {
+        "user": "alice",
+        "agent": "demo-client 0.1.0",
+        "on_behalf_of_chain": [
+          "alice",
+          "demo-client 0.1.0"
+        ]
+      },
+      "protocol": "mcp",
+      "method": "tools/call",
+      "server": "demo-rugpull --after 3",
+      "session_taint": null,
+      "trace_id": null,
+      "ts": "2026-10-07T09:00:01.000Z",
+      "kind": "request",
+      "tool": "get_fact_of_the_day",
+      "tool_def_sha256": "b45a341a4f4485912a8ee46f3bc4eb94b5969d6890d3833fab72157d177ad3cf",
+      "args_digest": "8775b1334713d4d4ca22f337a2fa51d8117c46d13f4e64a114d92c3134fe7e12",
+      "decision": {
+        "effect": "deny",
+        "control": "verify-before-call",
+        "reason": "tool_changed"
+      },
+      "outcome": null,
+      "seq": 3,
+      "prev_hash": "c0646538c6a5e17781651a861cb1c58594eef1c1d540f04838aaf89f250758e5",
+      "entry_hash": "702dc85e65ccf1722d4b2196c4d510f11c6e91a646281a45484e5b82276efbdf"
+    }
+  ],
+  "expected": {
+    "ok": true,
+    "count": 3,
+    "head_hash": "702dc85e65ccf1722d4b2196c4d510f11c6e91a646281a45484e5b82276efbdf"
+  },
+  "tampered": [
+    {
+      "name": "decision flipped from deny to allow",
+      "entries": [
+        {
+          "schema_version": "0.1",
+          "run_id": "vector-run-001",
+          "tenant": "default",
+          "actor": {
+            "user": "alice",
+            "agent": "demo-client 0.1.0",
+            "on_behalf_of_chain": [
+              "alice",
+              "demo-client 0.1.0"
+            ]
+          },
+          "protocol": "mcp",
+          "method": "tools/call",
+          "server": "demo-rugpull --after 3",
+          "session_taint": null,
+          "trace_id": null,
+          "ts": "2026-10-07T09:00:00.000Z",
+          "kind": "request",
+          "tool": "get_fact_of_the_day",
+          "tool_def_sha256": "b45a341a4f4485912a8ee46f3bc4eb94b5969d6890d3833fab72157d177ad3cf",
+          "args_digest": "8775b1334713d4d4ca22f337a2fa51d8117c46d13f4e64a114d92c3134fe7e12",
+          "decision": {
+            "effect": "allow",
+            "control": null,
+            "reason": null
+          },
+          "outcome": null,
+          "seq": 1,
+          "prev_hash": "0000000000000000000000000000000000000000000000000000000000000000",
+          "entry_hash": "a231afb588c3236a3312d36cdb085c8ad7d1622811e2ed5ca77b4795894b50cc"
+        },
+        {
+          "schema_version": "0.1",
+          "run_id": "vector-run-001",
+          "tenant": "default",
+          "actor": {
+            "user": "alice",
+            "agent": "demo-client 0.1.0",
+            "on_behalf_of_chain": [
+              "alice",
+              "demo-client 0.1.0"
+            ]
+          },
+          "protocol": "mcp",
+          "method": "tools/call",
+          "server": "demo-rugpull --after 3",
+          "session_taint": null,
+          "trace_id": null,
+          "ts": "2026-10-07T09:00:00.050Z",
+          "kind": "outcome",
+          "tool": "get_fact_of_the_day",
+          "tool_def_sha256": "b45a341a4f4485912a8ee46f3bc4eb94b5969d6890d3833fab72157d177ad3cf",
+          "args_digest": null,
+          "decision": null,
+          "outcome": {
+            "status": "ok",
+            "result_digest": "3b8921c39e2ebb7bab4a1d59714ba03e95ff6a1ce7276557ebb9ed5492cc3eed",
+            "request_hash": "a231afb588c3236a3312d36cdb085c8ad7d1622811e2ed5ca77b4795894b50cc"
+          },
+          "seq": 2,
+          "prev_hash": "a231afb588c3236a3312d36cdb085c8ad7d1622811e2ed5ca77b4795894b50cc",
+          "entry_hash": "c0646538c6a5e17781651a861cb1c58594eef1c1d540f04838aaf89f250758e5"
+        },
+        {
+          "schema_version": "0.1",
+          "run_id": "vector-run-001",
+          "tenant": "default",
+          "actor": {
+            "user": "alice",
+            "agent": "demo-client 0.1.0",
+            "on_behalf_of_chain": [
+              "alice",
+              "demo-client 0.1.0"
+            ]
+          },
+          "protocol": "mcp",
+          "method": "tools/call",
+          "server": "demo-rugpull --after 3",
+          "session_taint": null,
+          "trace_id": null,
+          "ts": "2026-10-07T09:00:01.000Z",
+          "kind": "request",
+          "tool": "get_fact_of_the_day",
+          "tool_def_sha256": "b45a341a4f4485912a8ee46f3bc4eb94b5969d6890d3833fab72157d177ad3cf",
+          "args_digest": "8775b1334713d4d4ca22f337a2fa51d8117c46d13f4e64a114d92c3134fe7e12",
+          "decision": {
+            "effect": "allow",
+            "control": "verify-before-call",
+            "reason": "tool_changed"
+          },
+          "outcome": null,
+          "seq": 3,
+          "prev_hash": "c0646538c6a5e17781651a861cb1c58594eef1c1d540f04838aaf89f250758e5",
+          "entry_hash": "702dc85e65ccf1722d4b2196c4d510f11c6e91a646281a45484e5b82276efbdf"
+        }
+      ],
+      "expected": {
+        "ok": false,
+        "index": 2,
+        "kind": "edited"
+      }
+    },
+    {
+      "name": "tool name changed",
+      "entries": [
+        {
+          "schema_version": "0.1",
+          "run_id": "vector-run-001",
+          "tenant": "default",
+          "actor": {
+            "user": "alice",
+            "agent": "demo-client 0.1.0",
+            "on_behalf_of_chain": [
+              "alice",
+              "demo-client 0.1.0"
+            ]
+          },
+          "protocol": "mcp",
+          "method": "tools/call",
+          "server": "demo-rugpull --after 3",
+          "session_taint": null,
+          "trace_id": null,
+          "ts": "2026-10-07T09:00:00.000Z",
+          "kind": "request",
+          "tool": "get_weather",
+          "tool_def_sha256": "b45a341a4f4485912a8ee46f3bc4eb94b5969d6890d3833fab72157d177ad3cf",
+          "args_digest": "8775b1334713d4d4ca22f337a2fa51d8117c46d13f4e64a114d92c3134fe7e12",
+          "decision": {
+            "effect": "allow",
+            "control": null,
+            "reason": null
+          },
+          "outcome": null,
+          "seq": 1,
+          "prev_hash": "0000000000000000000000000000000000000000000000000000000000000000",
+          "entry_hash": "a231afb588c3236a3312d36cdb085c8ad7d1622811e2ed5ca77b4795894b50cc"
+        },
+        {
+          "schema_version": "0.1",
+          "run_id": "vector-run-001",
+          "tenant": "default",
+          "actor": {
+            "user": "alice",
+            "agent": "demo-client 0.1.0",
+            "on_behalf_of_chain": [
+              "alice",
+              "demo-client 0.1.0"
+            ]
+          },
+          "protocol": "mcp",
+          "method": "tools/call",
+          "server": "demo-rugpull --after 3",
+          "session_taint": null,
+          "trace_id": null,
+          "ts": "2026-10-07T09:00:00.050Z",
+          "kind": "outcome",
+          "tool": "get_fact_of_the_day",
+          "tool_def_sha256": "b45a341a4f4485912a8ee46f3bc4eb94b5969d6890d3833fab72157d177ad3cf",
+          "args_digest": null,
+          "decision": null,
+          "outcome": {
+            "status": "ok",
+            "result_digest": "3b8921c39e2ebb7bab4a1d59714ba03e95ff6a1ce7276557ebb9ed5492cc3eed",
+            "request_hash": "a231afb588c3236a3312d36cdb085c8ad7d1622811e2ed5ca77b4795894b50cc"
+          },
+          "seq": 2,
+          "prev_hash": "a231afb588c3236a3312d36cdb085c8ad7d1622811e2ed5ca77b4795894b50cc",
+          "entry_hash": "c0646538c6a5e17781651a861cb1c58594eef1c1d540f04838aaf89f250758e5"
+        },
+        {
+          "schema_version": "0.1",
+          "run_id": "vector-run-001",
+          "tenant": "default",
+          "actor": {
+            "user": "alice",
+            "agent": "demo-client 0.1.0",
+            "on_behalf_of_chain": [
+              "alice",
+              "demo-client 0.1.0"
+            ]
+          },
+          "protocol": "mcp",
+          "method": "tools/call",
+          "server": "demo-rugpull --after 3",
+          "session_taint": null,
+          "trace_id": null,
+          "ts": "2026-10-07T09:00:01.000Z",
+          "kind": "request",
+          "tool": "get_fact_of_the_day",
+          "tool_def_sha256": "b45a341a4f4485912a8ee46f3bc4eb94b5969d6890d3833fab72157d177ad3cf",
+          "args_digest": "8775b1334713d4d4ca22f337a2fa51d8117c46d13f4e64a114d92c3134fe7e12",
+          "decision": {
+            "effect": "deny",
+            "control": "verify-before-call",
+            "reason": "tool_changed"
+          },
+          "outcome": null,
+          "seq": 3,
+          "prev_hash": "c0646538c6a5e17781651a861cb1c58594eef1c1d540f04838aaf89f250758e5",
+          "entry_hash": "702dc85e65ccf1722d4b2196c4d510f11c6e91a646281a45484e5b82276efbdf"
+        }
+      ],
+      "expected": {
+        "ok": false,
+        "index": 0,
+        "kind": "edited"
+      }
+    },
+    {
+      "name": "middle entry removed",
+      "entries": [
+        {
+          "schema_version": "0.1",
+          "run_id": "vector-run-001",
+          "tenant": "default",
+          "actor": {
+            "user": "alice",
+            "agent": "demo-client 0.1.0",
+            "on_behalf_of_chain": [
+              "alice",
+              "demo-client 0.1.0"
+            ]
+          },
+          "protocol": "mcp",
+          "method": "tools/call",
+          "server": "demo-rugpull --after 3",
+          "session_taint": null,
+          "trace_id": null,
+          "ts": "2026-10-07T09:00:00.000Z",
+          "kind": "request",
+          "tool": "get_fact_of_the_day",
+          "tool_def_sha256": "b45a341a4f4485912a8ee46f3bc4eb94b5969d6890d3833fab72157d177ad3cf",
+          "args_digest": "8775b1334713d4d4ca22f337a2fa51d8117c46d13f4e64a114d92c3134fe7e12",
+          "decision": {
+            "effect": "allow",
+            "control": null,
+            "reason": null
+          },
+          "outcome": null,
+          "seq": 1,
+          "prev_hash": "0000000000000000000000000000000000000000000000000000000000000000",
+          "entry_hash": "a231afb588c3236a3312d36cdb085c8ad7d1622811e2ed5ca77b4795894b50cc"
+        },
+        {
+          "schema_version": "0.1",
+          "run_id": "vector-run-001",
+          "tenant": "default",
+          "actor": {
+            "user": "alice",
+            "agent": "demo-client 0.1.0",
+            "on_behalf_of_chain": [
+              "alice",
+              "demo-client 0.1.0"
+            ]
+          },
+          "protocol": "mcp",
+          "method": "tools/call",
+          "server": "demo-rugpull --after 3",
+          "session_taint": null,
+          "trace_id": null,
+          "ts": "2026-10-07T09:00:01.000Z",
+          "kind": "request",
+          "tool": "get_fact_of_the_day",
+          "tool_def_sha256": "b45a341a4f4485912a8ee46f3bc4eb94b5969d6890d3833fab72157d177ad3cf",
+          "args_digest": "8775b1334713d4d4ca22f337a2fa51d8117c46d13f4e64a114d92c3134fe7e12",
+          "decision": {
+            "effect": "deny",
+            "control": "verify-before-call",
+            "reason": "tool_changed"
+          },
+          "outcome": null,
+          "seq": 3,
+          "prev_hash": "c0646538c6a5e17781651a861cb1c58594eef1c1d540f04838aaf89f250758e5",
+          "entry_hash": "702dc85e65ccf1722d4b2196c4d510f11c6e91a646281a45484e5b82276efbdf"
+        }
+      ],
+      "expected": {
+        "ok": false,
+        "index": 1,
+        "kind": "bad_seq"
+      }
+    },
+    {
+      "name": "entry rewritten and re-hashed, but the next link not updated",
+      "entries": [
+        {
+          "schema_version": "0.1",
+          "run_id": "vector-run-001",
+          "tenant": "default",
+          "actor": {
+            "user": "alice",
+            "agent": "demo-client 0.1.0",
+            "on_behalf_of_chain": [
+              "alice",
+              "demo-client 0.1.0"
+            ]
+          },
+          "protocol": "mcp",
+          "method": "tools/call",
+          "server": "demo-rugpull --after 3",
+          "session_taint": null,
+          "trace_id": null,
+          "ts": "2026-10-07T09:00:00.000Z",
+          "kind": "request",
+          "tool": "get_fact_of_the_day",
+          "tool_def_sha256": "b45a341a4f4485912a8ee46f3bc4eb94b5969d6890d3833fab72157d177ad3cf",
+          "args_digest": "8775b1334713d4d4ca22f337a2fa51d8117c46d13f4e64a114d92c3134fe7e12",
+          "decision": {
+            "effect": "allow",
+            "control": null,
+            "reason": null
+          },
+          "outcome": null,
+          "seq": 1,
+          "prev_hash": "0000000000000000000000000000000000000000000000000000000000000000",
+          "entry_hash": "a231afb588c3236a3312d36cdb085c8ad7d1622811e2ed5ca77b4795894b50cc"
+        },
+        {
+          "schema_version": "0.1",
+          "run_id": "vector-run-001",
+          "tenant": "default",
+          "actor": {
+            "user": "alice",
+            "agent": "demo-client 0.1.0",
+            "on_behalf_of_chain": [
+              "alice",
+              "demo-client 0.1.0"
+            ]
+          },
+          "protocol": "mcp",
+          "method": "tools/call",
+          "server": "demo-rugpull --after 3",
+          "session_taint": null,
+          "trace_id": null,
+          "ts": "2026-10-07T09:00:00.999Z",
+          "kind": "outcome",
+          "tool": "get_fact_of_the_day",
+          "tool_def_sha256": "b45a341a4f4485912a8ee46f3bc4eb94b5969d6890d3833fab72157d177ad3cf",
+          "args_digest": null,
+          "decision": null,
+          "outcome": {
+            "status": "ok",
+            "result_digest": "3b8921c39e2ebb7bab4a1d59714ba03e95ff6a1ce7276557ebb9ed5492cc3eed",
+            "request_hash": "a231afb588c3236a3312d36cdb085c8ad7d1622811e2ed5ca77b4795894b50cc"
+          },
+          "seq": 2,
+          "prev_hash": "a231afb588c3236a3312d36cdb085c8ad7d1622811e2ed5ca77b4795894b50cc",
+          "entry_hash": "d72798ec3baef1519b057d0899df9133fb9001846aaef82f9d444bbb659c42e2"
+        },
+        {
+          "schema_version": "0.1",
+          "run_id": "vector-run-001",
+          "tenant": "default",
+          "actor": {
+            "user": "alice",
+            "agent": "demo-client 0.1.0",
+            "on_behalf_of_chain": [
+              "alice",
+              "demo-client 0.1.0"
+            ]
+          },
+          "protocol": "mcp",
+          "method": "tools/call",
+          "server": "demo-rugpull --after 3",
+          "session_taint": null,
+          "trace_id": null,
+          "ts": "2026-10-07T09:00:01.000Z",
+          "kind": "request",
+          "tool": "get_fact_of_the_day",
+          "tool_def_sha256": "b45a341a4f4485912a8ee46f3bc4eb94b5969d6890d3833fab72157d177ad3cf",
+          "args_digest": "8775b1334713d4d4ca22f337a2fa51d8117c46d13f4e64a114d92c3134fe7e12",
+          "decision": {
+            "effect": "deny",
+            "control": "verify-before-call",
+            "reason": "tool_changed"
+          },
+          "outcome": null,
+          "seq": 3,
+          "prev_hash": "c0646538c6a5e17781651a861cb1c58594eef1c1d540f04838aaf89f250758e5",
+          "entry_hash": "702dc85e65ccf1722d4b2196c4d510f11c6e91a646281a45484e5b82276efbdf"
+        }
+      ],
+      "expected": {
+        "ok": false,
+        "index": 2,
+        "kind": "broken_link"
+      }
+    }
+  ]
+}

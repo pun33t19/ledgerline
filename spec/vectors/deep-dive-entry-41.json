@@ -1,0 +1,36 @@
+{
+  "description": "Entry 41 from the Ledgerline deep dive (illustrative schema, not v0.1). Its entry_hash was published there; recomputing it checks the hashing rule independently of this code.",
+  "entry": {
+    "seq": 41,
+    "ts": "2026-09-26T10:15:03.120Z",
+    "run_id": "run_7f3a",
+    "tenant": "acme-pune",
+    "actor": {
+      "user": "priya@acme.example",
+      "agent": "support-bot/instance-12",
+      "on_behalf_of_chain": [
+        "priya@acme.example",
+        "support-bot/instance-12"
+      ]
+    },
+    "protocol": "mcp",
+    "method": "tools/call",
+    "server": "supabase-mcp",
+    "tool": "execute_sql",
+    "tool_def_sha256": "cdfb9df55cacc0fd812ee57abe83564df867e1bb89db1f1518f5b94f67128e0f",
+    "args_sha256": "2a6a1dbb85aeed807af1877564f5c3c911dfacfdff5e429256a66d99aa892524",
+    "session_taint": "clean",
+    "decision": {
+      "effect": "allow",
+      "engine": "cedar",
+      "policy_bundle_sha256": "9c1d...e07a",
+      "matched_rule": "permit-read-tickets"
+    },
+    "prev_hash": "0000000000000000000000000000000000000000000000000000000000000000",
+    "entry_hash": "1bd152f0b478453eb02d283e442363c704b22a8f2a43cf8872ea522edaf7f0a6"
+  },
+  "tampered": {
+    "edit": "decision.effect: allow -> deny",
+    "expected_entry_hash": "f7f6e75029aea84decd82f561fde73c3ea89967e99accf713255ecbc3fb186a1"
+  }
+}
