@@ -1051,6 +1051,10 @@ FILES: dict[str, tuple[str, str]] = {
     "web/src/index.css": ("3", "Ledger design tokens (paper, rule, ink, loss, safe, guard), fonts, motion."),
     "web/src/lib/controls.ts": ("3", "Plain-language names and explanations for the controls."),
     "web/src/lib/runState.test.ts": ("3", "Unit tests for the run-state reducer."),
+    "web/src/lib/motion.ts": (
+        "3",
+        "usePrefersReducedMotion: the reduced-motion setting as a live React value.",
+    ),
     "web/src/lib/runState.ts": ("3", "Pure reducer: run events → what each column shows."),
     "web/src/lib/story.ts": (
         "3",
