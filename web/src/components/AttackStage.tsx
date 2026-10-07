@@ -1,13 +1,6 @@
-import {
-  type CSSProperties,
-  type PointerEvent,
-  type ReactNode,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
+import { type CSSProperties, type PointerEvent, type ReactNode, useEffect, useRef, useState } from "react";
 import type { Mode } from "../api/types";
+import { usePrefersReducedMotion } from "../lib/motion";
 import type { Beat, NodeId, Tone } from "../lib/story";
 
 // The world is laid out on a fixed 1000×560 floor and scaled to fit; the floor is tilted in 3D.
@@ -21,6 +14,11 @@ const AT: Record<NodeId, { x: number; y: number }> = {
   attacker: { x: 860, y: 105 },
 };
 const BEAT_MS = 2600;
+
+// Dragging past a limit meets growing resistance (0.3° per degree, up to 8° over), then settles back.
+const band = (v: number, lo: number, hi: number) =>
+  v < lo ? lo - Math.min(8, (lo - v) * 0.3) : v > hi ? hi + Math.min(8, (v - hi) * 0.3) : v;
+const clamp = (v: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, v));
 
 const TONE_TEXT: Record<Tone, string> = {
   normal: "text-ink",
@@ -171,14 +169,36 @@ interface WorldProps {
   index: number;
   scale: number;
   dragging?: boolean;
+  settling?: boolean;
   reduced?: boolean;
 }
 
 /** The tilted floor with its nodes, edges and the moving packet for one beat. */
-export function StageWorld({ mode, beats, index, scale, dragging = false, reduced = false }: WorldProps) {
+export function StageWorld({
+  mode,
+  beats,
+  index,
+  scale,
+  dragging = false,
+  settling = false,
+  reduced = false,
+}: WorldProps) {
   const beat = beats[Math.min(index, Math.max(beats.length - 1, 0))];
-  const states = nodeStates(mode, beats, index);
   const path = beat ? route(beat, mode) : [];
+  // A step's effects (glow, status, stop marker) appear when its packet arrives, not before.
+  const travelMs = path.length > 1 && !reduced ? Math.min(1600, 700 * (path.length - 1) + 400) : 0;
+  const beatId = beat?.id;
+  const [arrivedId, setArrivedId] = useState<string | undefined>(undefined);
+  useEffect(() => {
+    if (travelMs === 0) {
+      setArrivedId(beatId);
+      return;
+    }
+    const timer = window.setTimeout(() => setArrivedId(beatId), travelMs);
+    return () => window.clearTimeout(timer);
+  }, [beatId, travelMs]);
+  const arrived = beatId === undefined || arrivedId === beatId;
+  const states = nodeStates(mode, beats, arrived ? index : index - 1);
   const nodes: NodeId[] =
     mode === "protected"
       ? ["agent", "ledgerline", "server", "secrets", "attacker"]
@@ -194,8 +214,8 @@ export function StageWorld({ mode, beats, index, scale, dragging = false, reduce
         transformOrigin: "50% 50%",
       }}
     >
-      <div className="stage-plane" data-dragging={dragging} />
-      <div className="stage-graph" data-dragging={dragging}>
+      <div className="stage-plane" data-dragging={dragging} data-settling={settling} />
+      <div className="stage-graph" data-dragging={dragging} data-settling={settling}>
         <svg
           viewBox={`0 0 ${W} ${H}`}
           className="absolute inset-0 h-full w-full overflow-visible"
@@ -239,10 +259,12 @@ export function StageWorld({ mode, beats, index, scale, dragging = false, reduce
               opacity={0.85}
             />
           )}
-          {beat?.halted && (
+          {beat?.halted && arrived && (
             <g key={`stop-${beat.id}`} transform={`translate(${AT.ledgerline.x - 80} ${AT.ledgerline.y})`}>
-              <circle r={17} fill="var(--paper)" stroke="var(--guard)" strokeWidth={2.5} />
-              <path d="M-7 -7L7 7" stroke="var(--guard)" strokeWidth={2.5} strokeLinecap="round" />
+              <g className="arrive-pop">
+                <circle r={17} fill="var(--paper)" stroke="var(--guard)" strokeWidth={2.5} />
+                <path d="M-7 -7L7 7" stroke="var(--guard)" strokeWidth={2.5} strokeLinecap="round" />
+              </g>
             </g>
           )}
         </svg>
@@ -256,7 +278,7 @@ export function StageWorld({ mode, beats, index, scale, dragging = false, reduce
               offsetPath: `path("${pathOf(path)}")`,
               background: TONE_FILL[beat.tone],
               boxShadow: `0 0 0 6px color-mix(in srgb, ${TONE_FILL[beat.tone]} 22%, transparent), 0 0 28px 6px color-mix(in srgb, ${TONE_FILL[beat.tone]} 45%, transparent)`,
-              animationDuration: `${Math.min(1.6, 0.7 * (path.length - 1) + 0.4)}s`,
+              animationDuration: `${travelMs}ms`,
             }}
           />
         )}
@@ -266,7 +288,7 @@ export function StageWorld({ mode, beats, index, scale, dragging = false, reduce
             key={id}
             id={id}
             state={states[id]}
-            focused={beat && beat.focus === id ? beat.tone : undefined}
+            focused={arrived && beat && beat.focus === id ? beat.tone : undefined}
           />
         ))}
       </div>
@@ -290,13 +312,15 @@ export function AttackStage({ mode, beats, running, onFinished }: Props) {
   const [dragging, setDragging] = useState(false);
   const drag = useRef<{ x: number; y: number; spin: number; tilt: number } | null>(null);
   const box = useRef<HTMLDivElement>(null);
+  const live = useRef({ spin: -8, tilt: 50 });
+  const frame = useRef(0);
+  const [settling, setSettling] = useState(false);
+  const writeVars = (s: number, t: number) => {
+    box.current?.style.setProperty("--spin", `${s}deg`);
+    box.current?.style.setProperty("--tilt", `${t}deg`);
+  };
   const [scale, setScale] = useState(1);
-  const reduced = useMemo(
-    () =>
-      typeof window !== "undefined" &&
-      (window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ?? false),
-    [],
-  );
+  const reduced = usePrefersReducedMotion();
 
   // Fit the fixed-size world to the available width.
   useEffect(() => {
@@ -335,6 +359,7 @@ export function AttackStage({ mode, beats, running, onFinished }: Props) {
   const onPointerDown = (e: PointerEvent) => {
     if (flat) return;
     drag.current = { x: e.clientX, y: e.clientY, spin, tilt };
+    live.current = { spin, tilt };
     setDragging(true);
     (e.target as Element).setPointerCapture?.(e.pointerId);
   };
@@ -342,17 +367,38 @@ export function AttackStage({ mode, beats, running, onFinished }: Props) {
     if (!drag.current) return;
     const dx = e.clientX - drag.current.x;
     const dy = e.clientY - drag.current.y;
-    setSpin(Math.max(-40, Math.min(40, drag.current.spin + dx / 6)));
-    setTilt(Math.max(28, Math.min(64, drag.current.tilt - dy / 6)));
+    // Write straight to the stage (no React render per move), at most once per frame.
+    live.current = {
+      spin: band(drag.current.spin + dx / 6, -40, 40),
+      tilt: band(drag.current.tilt - dy / 6, 28, 64),
+    };
+    if (!frame.current) {
+      frame.current = requestAnimationFrame(() => {
+        frame.current = 0;
+        writeVars(live.current.spin, live.current.tilt);
+      });
+    }
   };
   const endDrag = () => {
+    if (!drag.current) return;
     drag.current = null;
+    cancelAnimationFrame(frame.current);
+    frame.current = 0;
+    const s = clamp(live.current.spin, -40, 40);
+    const t = clamp(live.current.tilt, 28, 64);
     setDragging(false);
+    setSettling(true);
+    writeVars(s, t); // React may skip the write if the state value didn't change
+    setSpin(s);
+    setTilt(t);
+    window.setTimeout(() => setSettling(false), 400);
   };
 
+  // While dragging, a re-render (e.g. the next step) must keep the live angle, not the last committed one.
+  const view = dragging ? live.current : { spin, tilt };
   const vars = {
-    "--tilt": `${flat ? 0 : tilt}deg`,
-    "--spin": `${flat ? 0 : spin}deg`,
+    "--tilt": `${flat ? 0 : view.tilt}deg`,
+    "--spin": `${flat ? 0 : view.spin}deg`,
   } as CSSProperties;
   const height = H * scale * (flat ? 1 : 0.8);
 
@@ -380,6 +426,7 @@ export function AttackStage({ mode, beats, running, onFinished }: Props) {
           index={index}
           scale={scale}
           dragging={dragging}
+          settling={settling}
           reduced={reduced}
         />
       </div>
@@ -434,7 +481,7 @@ export function AttackStage({ mode, beats, running, onFinished }: Props) {
               } else setPlaying((p) => !p);
             }}
             disabled={beats.length === 0}
-            className="inline-flex h-11 min-w-[7.5rem] items-center justify-center gap-2 rounded-full bg-button px-5 font-medium text-button-ink disabled:opacity-40"
+            className="inline-flex h-11 min-w-[7.5rem] items-center justify-center gap-2 rounded-full bg-button px-5 font-medium text-button-ink disabled:opacity-40 transition-transform duration-[160ms] ease-(--ease-out) active:scale-[0.97] disabled:active:scale-100"
           >
             {atEnd && !running ? "Replay" : playing ? "Pause" : "Play"}
           </button>
@@ -452,7 +499,7 @@ export function AttackStage({ mode, beats, running, onFinished }: Props) {
             type="button"
             aria-pressed={!flat}
             onClick={() => setFlat((f) => !f)}
-            className="h-11 rounded-full border border-rule-strong px-4 text-sm text-ink-muted hover:text-ink"
+            className="h-11 rounded-full border border-rule-strong px-4 text-sm text-ink-muted hover:text-ink transition-transform duration-[160ms] ease-(--ease-out) active:scale-[0.97] disabled:active:scale-100"
           >
             {flat ? "3D view" : "Flat view"}
           </button>
@@ -506,7 +553,7 @@ function PlayerButton({
       title={label}
       onClick={onClick}
       disabled={disabled}
-      className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-rule-strong text-ink hover:bg-paper-raised disabled:opacity-35"
+      className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-rule-strong text-ink hover:bg-paper-raised disabled:opacity-35 transition-transform duration-[160ms] ease-(--ease-out) active:scale-[0.97] disabled:active:scale-100"
     >
       <svg
         viewBox="0 0 24 24"

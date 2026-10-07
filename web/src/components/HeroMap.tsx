@@ -1,5 +1,6 @@
 import { type CSSProperties, useEffect, useRef, useState } from "react";
 import type { Mode } from "../api/types";
+import { usePrefersReducedMotion } from "../lib/motion";
 import type { Beat } from "../lib/story";
 import { StageWorld } from "./AttackStage";
 
@@ -39,9 +40,7 @@ export function HeroMap() {
   const box = useRef<HTMLDivElement>(null);
   const [scale, setScale] = useState(0.8);
   const [tick, setTick] = useState(0);
-  const reduced =
-    typeof window !== "undefined" &&
-    (window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ?? false);
+  const reduced = usePrefersReducedMotion();
 
   useEffect(() => {
     const el = box.current;
